@@ -1,0 +1,6 @@
+# cabal
+dist/
+
+# GHC output
+*.o
+*.hi
