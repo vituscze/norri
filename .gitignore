@@ -4,3 +4,8 @@ dist/
 # GHC output
 *.o
 *.hi
+
+# Compiler output
+*.cpp
+*.hpp
+*.h
