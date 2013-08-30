@@ -24,9 +24,9 @@ import qualified Text.Parsec.Token as Tok
 lexer :: Tok.TokenParser st
 lexer = Tok.makeTokenParser style
   where
-    reservedOps   = ["->", "\\", ":", "|"]  -- TODO: Arithmetic?
-    reservedNames = ["data", "let", "in"]  -- TODO: Add where
-    identLetter   = alphaNum <|> oneOf "_"
+    reservedOps   = ["->", "\\", ":", "|"]
+    reservedNames = ["data", "let", "in"]
+    identLetter   = char '_' <|> alphaNum
 
     style = haskellStyle
         { Tok.reservedOpNames = reservedOps

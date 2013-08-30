@@ -1,9 +1,24 @@
 module Compiler.Parser
     (
-      expr  -- todo
+    -- * Expressions
+      expr
+
+    -- * Value definitions
     , def
+    , defOnly
+
+    -- * Type signatures
     , typ
+    , typeSig
+
+    -- * Data definitions
     , dataDef
+
+    -- * Top level entities
+    , topLevel
+
+    -- * Files
+    , file
     )
     where
 
@@ -15,9 +30,11 @@ import Text.Parsec.String (Parser)
 import Compiler.AST
 import Compiler.Lexer
 
+-- | Parses a variable of any sort (starting with lower or upper case letter).
 var :: Parser Expr
 var = Var <$> anyIdent
 
+-- | Parses a lambda abstraction.
 lambda :: Parser Expr
 lambda = flip (foldr Lam)
     <$> (reservedOp "\\"
@@ -25,15 +42,19 @@ lambda = flip (foldr Lam)
     <*> (reservedOp "->"
      *> expr)
 
+-- | Parses a let-in expression.
 letin :: Parser Expr
 letin = Let <$> (reserved "let"
-             *> def `sepBy1` semi)
+             *> defOnly `sepBy1` semi)
             <*> (reserved "in"
              *> expr)
 
+-- | Parses an integer literal.
 numLit :: Parser Expr
 numLit = NumLit <$> integer
 
+-- | Parses an 'Expr' without any operators or application at the outermost
+--   level.
 factor :: Parser Expr
 factor =  parens expr
       <|> var
@@ -42,9 +63,12 @@ factor =  parens expr
       <|> letin
       <?> "variable, literal, lambda or let"
 
+-- | Parses an 'Expr' without any operator at the outermost level.
 manyFactors :: Parser Expr
 manyFactors = foldl1 App <$> many1 factor
 
+-- | Parses an 'Expr' given a parser for an operator for forcing
+--   type unification.
 exprOp :: Parser (Expr -> Type -> Expr) -> Parser Expr
 exprOp colon = manyFactors >>= ((<|>) <$> lassocP <*> return)
   where
@@ -55,15 +79,20 @@ exprOp colon = manyFactors >>= ((<|>) <$> lassocP <*> return)
 
     lassocP1 = (<|>) <$> lassocP <*> return
 
+-- | Parses an 'Expr'.
 expr :: Parser Expr
 expr = exprOp (reservedOp ":" *> pure SetType)
 
-def :: Parser ValueDef
-def = ValueDef <$> lowIdent
-               <*> (reservedOp "="
-                *> expr)
+-- | Parses a definition given the identifier of the entity being defined.
+def :: String -> Parser ValueDef
+def s = ValueDef s <$> (reservedOp "=" *> expr)
 
--- TODO: Be more efficient?
+-- | Parses a whole definition.
+--
+--   Unlike 'def', this also parses the identifier on its own.
+defOnly :: Parser ValueDef
+defOnly = lowIdent >>= def
+
 -- | Parses a type name, which is an 'identifier' startih with an upper
 --   case letter.
 tyName :: Parser Type
@@ -94,24 +123,50 @@ typ = Ex.buildExpressionParser table manyTyFactors
     arrow = TyApp . TyApp (TyData "->")
 
 -- | Parser for a type signature 'TypeSig'.
-typeSig :: Parser TypeSig
-typeSig = Sig <$> lowIdent
-              <*> (reservedOp ":"
-               *> typ)
+typeSig :: String -> Parser TypeSig
+typeSig s = Sig s <$> (reservedOp ":" *> typ)
 
+-- | Parses a vertical bar.
 vbar :: Parser ()
 vbar = reservedOp "|"
 
+-- | Parses a type constructor 'TyCon'.
 tyCon :: Parser TyCon
 tyCon = TyCon <$> upIdent
               <*> many lowIdent
 
+-- | Parses a 'Variant' of a data type definition.
 variant :: Parser Variant
 variant = DataCon <$> upIdent
                   <*> many (tyVar <|> parens typ)
 
+-- | Parses a data type definition.
+--
+--   Note that this parser also allows empty data definitions.
 dataDef :: Parser DataDef
 dataDef = DataDef <$> (reserved "data"
                    *> tyCon)
                   <*> (reserved "=" *> variant `sepBy1` vbar
                   <|> pure [])
+
+-- | Parses a definition or a type signature.
+--
+--   This parser exists to factor out the requirement of both
+--   'def' and 'typeSig' to parse identifier first. This way we can avoid
+--   backtracking after parsing identifier and realizing that what follows
+--   isn't a type signature when definition is expected or vice versa.
+defOrSig :: Parser TopLevel
+defOrSig = lowIdent >>= \i ->
+    (Value <$> def i) <|> (Type <$> typeSig i)
+
+
+-- TODO: get rid of try by factoring out identifier recognition
+-- | Parses a 'TopLevel' entity.
+topLevel :: Parser TopLevel
+topLevel = (Data <$> dataDef) <|> defOrSig
+
+-- | Parses whole 'Module'.
+--
+--   Parses everything in the input stream.
+file :: Parser Module
+file = Module <$> (everything $ topLevel `sepBy` semi)
