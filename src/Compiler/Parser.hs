@@ -1,12 +1,13 @@
 module Compiler.Parser
     (
       expr  -- todo
+    , def
+    , typ
+    , dataDef
     )
     where
 
-import Control.Applicative hiding ((<|>))
-import Control.Monad
-import Data.Char
+import Control.Applicative hiding ((<|>), empty, many)
 import Text.Parsec
 import qualified Text.Parsec.Expr as Ex
 import Text.Parsec.String (Parser)
@@ -15,18 +16,18 @@ import Compiler.AST
 import Compiler.Lexer
 
 var :: Parser Expr
-var = Var <$> identifier
+var = Var <$> anyIdent
 
 lambda :: Parser Expr
 lambda = flip (foldr Lam)
     <$> (reservedOp "\\"
-     *> many1 identifier)
+     *> many1 lowIdent)
     <*> (reservedOp "->"
      *> expr)
 
 letin :: Parser Expr
 letin = Let <$> (reserved "let"
-             *> sepBy1 def semi)
+             *> def `sepBy1` semi)
             <*> (reserved "in"
              *> expr)
 
@@ -58,7 +59,7 @@ expr :: Parser Expr
 expr = exprOp (reservedOp ":" *> pure SetType)
 
 def :: Parser ValueDef
-def = ValueDef <$> identifier
+def = ValueDef <$> lowIdent
                <*> (reservedOp "="
                 *> expr)
 
@@ -66,12 +67,12 @@ def = ValueDef <$> identifier
 -- | Parses a type name, which is an 'identifier' startih with an upper
 --   case letter.
 tyName :: Parser Type
-tyName = TyData <$> try (mfilter (isUpper . head) identifier)
+tyName = TyData <$> upIdent
 
 -- | Parses a type variable, which as an 'identifier' starting with a lower
 --   case letter.
 tyVar :: Parser Type
-tyVar = TyVar <$> try (mfilter (isLower . head) identifier)
+tyVar = TyVar <$> lowIdent
 
 -- | Parser for a 'Type' without any operators or type application at the
 --   outermost level.
@@ -94,6 +95,23 @@ typ = Ex.buildExpressionParser table manyTyFactors
 
 -- | Parser for a type signature 'TypeSig'.
 typeSig :: Parser TypeSig
-typeSig = Sig <$> identifier
+typeSig = Sig <$> lowIdent
               <*> (reservedOp ":"
                *> typ)
+
+vbar :: Parser ()
+vbar = reservedOp "|"
+
+tyCon :: Parser TyCon
+tyCon = TyCon <$> upIdent
+              <*> many lowIdent
+
+variant :: Parser Variant
+variant = DataCon <$> upIdent
+                  <*> many (tyVar <|> parens typ)
+
+dataDef :: Parser DataDef
+dataDef = DataDef <$> (reserved "data"
+                   *> tyCon)
+                  <*> (reserved "=" *> variant `sepBy1` vbar
+                  <|> pure [])

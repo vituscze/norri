@@ -2,7 +2,9 @@ module Compiler.Lexer
     (
       lexer
     , parens
-    , identifier
+    , anyIdent
+    , upIdent
+    , lowIdent
     , reserved
     , reservedOp
     , semi
@@ -12,6 +14,8 @@ module Compiler.Lexer
     where
 
 import Control.Applicative hiding ((<|>))
+import Control.Monad
+import Data.Char
 import Text.Parsec
 import Text.Parsec.Language
 import Text.Parsec.String (Parser)
@@ -33,8 +37,14 @@ lexer = Tok.makeTokenParser style
 parens :: Parser a -> Parser a
 parens = Tok.parens lexer
 
-identifier :: Parser String
-identifier = Tok.identifier lexer
+anyIdent :: Parser String
+anyIdent = Tok.identifier lexer
+
+upIdent :: Parser String
+upIdent = try (mfilter (isUpper . head) anyIdent) <?> "upper case identifier"
+
+lowIdent :: Parser String
+lowIdent = try (mfilter (isLower . head) anyIdent) <?> "lower case identifier"
 
 reserved :: String -> Parser ()
 reserved = Tok.reserved lexer
