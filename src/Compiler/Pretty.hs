@@ -1,6 +1,16 @@
 module Compiler.Pretty
     (
+    -- * Module pretty printing
+      prettyModule
+    , prettyTopLevel
 
+    -- * Top level entities pretty printing
+    , prettyType
+    , prettyDataDef
+    , prettyValDef
+
+    -- * Expression pretty printing
+    , prettyExpr
     )
     where
 
@@ -84,7 +94,7 @@ prettyTopLevel :: TopLevel -> String
 prettyTopLevel tl = case tl of
     Data  dd -> prettyDataDef dd
     Value vd -> prettyValDef vd
-    Type  ts -> ""  -- Types are erased.
+    Type  _  -> ""  -- Types are erased.
 
 -- | Pretty prints a type signature.
 --
@@ -106,13 +116,13 @@ prettyValDef (ValueDef name expr) =
 prettyExpr :: String  -- ^ Name of the @struct@.
            -> Expr
            -> String
-prettyExpr = go 0
+prettyExpr = go (0 :: Int)
   where
     localStruct n = "__local" ++ show n
     leftStruct  n = "__left"  ++ show n
     rightStruct n = "__right" ++ show n
 
-    go u name (Var v) =
+    go _ name (Var v) =
         struct name . typedef . innerType $ v
 
     go u name (Lam x expr) =
@@ -147,3 +157,9 @@ prettyExpr = go 0
             ]
       where
         local = localStruct u
+
+    go u name (SetType expr _) =
+        go u name expr
+
+    go u name (NumLit n) =
+        struct name . typedef $ "Int<" ++ show n ++ ">"
