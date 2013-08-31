@@ -132,7 +132,7 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
             [ "__data<"
             , show n
             , ", dummy"
-            , concatMap (", " ++) (reverse args)
+            , concatMap (\x -> ", typename " ++ x ++ "::type") (reverse args)
             , ">"
             ]
 
@@ -177,17 +177,23 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
             , concatMap (", " ++) args
             , "> >\n{\n"
             , decls $
-                [ prettyExpr localS . foldl1 App . map Var $ arg:args
+                wrapFields ++
+                [ prettyExpr localS . foldl1 App . map Var $ arg:map (extra ++)args
                 , typedef $ innerType localS
                 ]
             , "\n};\n"
             ]
-
           where
             args = zipWith (\_ n -> fieldA ++ show n) ts [0 ..]
 
+            wrapFields = map wrapStruct args
+              where
+                wrapStruct name = struct (extra ++ name) $
+                    typedef name
+
             fieldA = "__field_arg"
             localS = "__local_case"
+            extra  = "__extra"
 
 
 
