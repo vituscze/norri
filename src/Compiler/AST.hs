@@ -1,6 +1,6 @@
 module Compiler.AST
     (
-    -- * Module structure.
+    -- * Module structure
       Module(..)
     , TopLevel(..)
 
@@ -34,9 +34,9 @@ data Module
 -- | A top level definition/declaration is either a data definition,
 --   value definition or a type signature.
 data TopLevel
-    = Data DataDef    -- ^ A data definition.
-    | Value ValueDef  -- ^ A value definition.
-    | Type TypeSig    -- ^ A type signature.
+    = Data DataDef    -- ^ Data definition.
+    | Value ValueDef  -- ^ Value definition.
+    | Type TypeSig    -- ^ Type signature.
     deriving (Show)
 
 
@@ -67,13 +67,13 @@ data ValueDef
 -- | AST for an expression, which can be either a variable, lambda abstraction,
 --   application of two expressions or a @let@ declaration.
 data Expr
-    = Var Name             -- ^ A single variable.
-    | Lam Name Expr        -- ^ A lambda abstraction.
-    | App Expr Expr        -- ^ An application of two expressions.
+    = Var Name             -- ^ Single variable.
+    | Lam Name Expr        -- ^ Lambda abstraction.
+    | App Expr Expr        -- ^ Application of two expressions.
     | Let [ValueDef] Expr  -- ^ @let@ declaration. @let decls in expr@
                            --   is represented as @Let [[decls]] [[expr]]@.
-    | SetType Expr Type    -- ^ Explicitly declare the type of expression.
-    | NumLit Integer       -- ^ An integer literal.
+    | SetType Expr Type    -- ^ Explicit declaration of expression type.
+    | NumLit Integer       -- ^ Integer literal.
     deriving (Show)
 
 
@@ -86,7 +86,7 @@ data TypeSig
 -- | AST for a type, which can either be a concrete type, type variable or
 --   application of two types (with correct kind).
 data Type
-    = TyData TyName    -- ^ A concrete type.
-    | TyVar TyVar      -- ^ A type variable.
+    = TyData TyName    -- ^ Concrete type.
+    | TyVar TyVar      -- ^ Type variable.
     | TyApp Type Type  -- ^ Application of a type constructor.
     deriving (Show)

@@ -14,6 +14,7 @@ module Compiler.Pretty
     )
     where
 
+import Data.Char
 import Data.List
 
 import Compiler.AST
@@ -73,6 +74,12 @@ innerType :: String  -- ^ Type expression.
           -> String
 innerType what = "typename " ++ what ++ "::type"
 
+innerApply :: String  -- ^ Name of the template argument.
+           -> String  -- ^ Name of the @struct@.
+           -> String  -- ^ Content of the @struct@.
+           -> String
+innerApply arg name = struct name . struct "type" . template arg "apply"
+
 -- | Pretty prints a list of declarations.
 --
 --   This is just a name-flavored 'concat'.
@@ -104,12 +111,92 @@ prettyType :: TypeSig -> String
 prettyType _ = ""
 
 prettyDataDef :: DataDef -> String
-prettyDataDef = error "prettyDataDef: TODO"
+prettyDataDef (DataDef (TyCon name _) variants) = decls $
+    [ intercalate "\n" $ zipWith defineCtor variants [0 ..]
+    , defineElim variants
+    ]
+  where
+    localArg    n = "__ctor_arg"   ++ show n
+    localStruct n = "__ctor_local" ++ show n
+
+    ctorStruct    = "__ctor_top_local"
+    elimStruct    = "__elim_top_local"
+
+    defineCtor (DataCon cname ts) n =
+        struct cname . decls $
+            [ go 0 ctorStruct [] ts
+            , typedef $ innerType ctorStruct
+            ]
+      where
+        go _ name args [] = struct name . typedef . concat $
+            [ "__data<"
+            , show n
+            , ", dummy"
+            , concatMap (", " ++) (reverse args)
+            , ">"
+            ]
+
+        go u name args (_:ts) = innerApply localA name . decls $
+                [ go (u + 1) localS (localA:args) ts
+                , typedef $ innerType localS
+                ]
+          where
+            localA = localArg u
+            localS = localStruct u
+
+    defineElim vs = struct (firstToLower name) . decls $
+        [ go 0 elimStruct [] vs
+        , typedef $ innerType elimStruct
+        ]
+      where
+        firstToLower []     = []
+        firstToLower (c:cs) = toLower c:cs
+
+        go _ name args [] =
+            struct name . struct "type" . decls . intersperse "\n" $
+                "template <typename>\nstruct apply_alt;\n"  -- Forward declaration.
+              : zipWith3 handleCase vs (reverse args) [0 ..]
+             ++ [ template "__t" "apply" $
+                      typedef "typename apply_alt<typename __t::type>::type" -- TODO: make this nicer
+                ]
+
+        go u name args (_:vs) = innerApply localA name . decls $
+            [ go (u + 1) localS (localA:args) vs
+            , typedef $ innerType localS
+            ]
+          where
+            localA = localArg u
+            localS = localStruct u
+
+        handleCase (DataCon _ ts) arg n = concat $
+            [ "template <typename dummy"
+            , concatMap (", typename " ++) args
+            , ">\nstruct apply_alt<__data<"
+            , show n
+            , ", dummy"
+            , concatMap (", " ++) args
+            , "> >\n{\n"
+            , decls $
+                [ prettyExpr localS . foldl1 App . map Var $ arg:args
+                , typedef $ innerType localS
+                ]
+            , "\n};\n"
+            ]
+
+          where
+            args = zipWith (\_ n -> fieldA ++ show n) ts [0 ..]
+
+            fieldA = "__field_arg"
+            localS = "__local_case"
+
+
 
 prettyValDef :: ValueDef -> String
 prettyValDef (ValueDef name expr) =
-    struct name $ prettyExpr defStruct expr ++
-        typedef (innerType defStruct)
+    struct name . decls $
+        [ prettyExpr defStruct expr
+        , typedef . innerType $ defStruct
+        ]
   where
     defStruct = "__def"
 
@@ -125,8 +212,7 @@ prettyExpr = go (0 :: Int)
     go _ name (Var v) =
         struct name . typedef . innerType $ v
 
-    go u name (Lam x expr) =
-        struct name . struct "type" . template x "apply" . decls $
+    go u name (Lam x expr) = innerApply x name . decls $
             [ go (u + 1) local expr
             , typedef $ innerType local
             ]

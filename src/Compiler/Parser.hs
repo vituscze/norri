@@ -138,7 +138,7 @@ tyCon = TyCon <$> upIdent
 -- | Parses a 'Variant' of a data type definition.
 variant :: Parser Variant
 variant = DataCon <$> upIdent
-                  <*> many (tyVar <|> parens typ)
+                  <*> many (tyVar <|> tyName <|> parens typ)
 
 -- | Parses a data type definition.
 --
