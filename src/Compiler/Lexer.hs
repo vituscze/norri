@@ -1,7 +1,8 @@
+-- | Provides few basic parsers and parser combinators that deal with
+--   whitespace and comments properly.
 module Compiler.Lexer
     (
-      lexer
-    , parens
+      parens
     , anyIdent
     , upIdent
     , lowIdent
@@ -34,29 +35,38 @@ lexer = Tok.makeTokenParser style
         , Tok.identLetter     = identLetter
         }
 
+-- | Parses a value of type @a@ inside parentheses.
 parens :: Parser a -> Parser a
 parens = Tok.parens lexer
 
+-- | Parses any kind of identifier.
 anyIdent :: Parser String
 anyIdent = Tok.identifier lexer
 
+-- | Parses an identifier which starts with an upper case letter.
 upIdent :: Parser String
 upIdent = try (mfilter (isUpper . head) anyIdent) <?> "upper case identifier"
 
+-- | Parses an identifier which starts with a lower case letter.
 lowIdent :: Parser String
 lowIdent = try (mfilter (isLower . head) anyIdent) <?> "lower case identifier"
 
+-- | Parses a reserved keyword given by a 'String'.
 reserved :: String -> Parser ()
 reserved = Tok.reserved lexer
 
+-- | Parses a reserved operator keyword given by a 'String'.
 reservedOp :: String -> Parser ()
 reservedOp = Tok.reservedOp lexer
 
+-- | Parses a semicolon and throws away the result.
 semi :: Parser ()
 semi = () <$ Tok.semi lexer
 
+-- | Parses an integer literal.
 integer :: Parser Integer
 integer = Tok.integer lexer
 
+-- | Forces a parser to parse whole input stream.
 everything :: Parser a -> Parser a
 everything p = Tok.whiteSpace lexer *> p <* eof

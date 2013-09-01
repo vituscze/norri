@@ -6,7 +6,7 @@ struct fix
         struct apply_rec
         {
             typedef typename
-                f::type::template apply< apply_rec<f, i + 1> >::type type;
+                f::type::template apply<apply_rec<f, i + 1> >::type type;
         };
 
         template <typename f>
@@ -14,6 +14,5 @@ struct fix
         {
             typedef typename apply_rec<f, 0>::type type;
         };
-
     };
 };

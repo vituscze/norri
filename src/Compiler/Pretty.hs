@@ -1,3 +1,5 @@
+-- | Allows the abstract syntax tree to be pretty printed as a template
+--   C++ code.
 module Compiler.Pretty
     (
     -- * Module pretty printing
@@ -37,8 +39,7 @@ rbrace = "\n};\n"
 struct :: String  -- ^ Name of the @struct@.
        -> String  -- ^ Content of the @struct@.
        -> String
-struct name content
-    = "struct " ++ name ++ lbrace ++ content ++ rbrace
+struct name content = concat ["struct ", name, lbrace, content, rbrace]
 
 -- | Pretty prints a @template@ given its name, contents and the (only)
 --   template argument.
@@ -56,6 +57,15 @@ template :: String  -- ^ Name of the template argument.
 template arg name content
     = "template <typename " ++ arg ++ ">\n" ++ struct name content
 
+-- | Pretty prints a @template@ @struct@ forward declaration.
+--
+-- >>> putStrLn $ fwdTemplate "s"
+-- template <typename>
+-- struct s;
+fwdTemplate :: String  -- ^ Name of the @struct@.
+            -> String
+fwdTemplate name = "template <typename>\nstruct " ++ name ++ ";\n"
+
 -- | Pretty prints a @typedef@ which identifies type expression @what@ with
 --   @type@.
 --
@@ -63,7 +73,7 @@ template arg name content
 -- typedef int type;
 typedef :: String  -- ^ Type expression.
         -> String
-typedef what = "typedef " ++ what ++ " type;"
+typedef what = "typedef " ++ what ++ " " ++ ty ++ ";"
 
 -- | Pretty prints a type expression extracting inner @type@ from another
 --   type.
@@ -72,13 +82,28 @@ typedef what = "typedef " ++ what ++ " type;"
 -- typename vector::type
 innerType :: String  -- ^ Type expression.
           -> String
-innerType what = "typename " ++ what ++ "::type"
+innerType what = "typename " ++ what ++ "::" ++ ty
 
+-- | Pretty prints a nested hierarchy of @struct@ures used for
+--   lambda abstraction.
+--
+-- >>> putStrLn $ innerApply "x" "s" "int x;"
+-- struct s
+-- {
+-- struct type
+-- {
+-- template <typename x>
+-- struct apply
+-- {
+-- int x;
+-- };
+-- };
+-- };
 innerApply :: String  -- ^ Name of the template argument.
            -> String  -- ^ Name of the @struct@.
            -> String  -- ^ Content of the @struct@.
            -> String
-innerApply arg name = struct name . struct "type" . template arg "apply"
+innerApply arg name = struct name . struct ty . template arg apply
 
 -- | Pretty prints a list of declarations.
 --
@@ -86,6 +111,14 @@ innerApply arg name = struct name . struct "type" . template arg "apply"
 decls :: [String]  -- ^ List of declarations.
       ->  String
 decls = concat
+
+-- | 'String' constant for inner @template@ used for lambda abstractions.
+apply :: String
+apply = "apply"
+
+-- | 'String' constant for inner @typedef@s.
+ty :: String
+ty = "type"
 
 -- | Pretty prints whole module.
 --
@@ -110,29 +143,41 @@ prettyTopLevel tl = case tl of
 prettyType :: TypeSig -> String
 prettyType _ = ""
 
+-- | Pretty prints a data definition.
+--
+--   Note that since this language doesn't allow pattern matching, this
+--   function will automatically define an appropriate eliminator for the
+--   data type.
 prettyDataDef :: DataDef -> String
 prettyDataDef (DataDef (TyCon name _) variants) = decls $
-    [ intercalate "\n" $ zipWith defineCtor variants [0 ..]
+    [ intercalate sep $ zipWith defineCtor variants [0 ..]
     , defineElim variants
     ]
   where
-    localArg    n = "__ctor_arg"   ++ show n
-    localStruct n = "__ctor_local" ++ show n
+    sep = "\n\n"
 
-    ctorStruct    = "__ctor_top_local"
-    elimStruct    = "__elim_top_local"
+    localArg    n  = "__ctor_arg"   ++ show n
+    localStruct n  = "__ctor_local" ++ show n
 
-    defineCtor (DataCon cname ts) n =
-        struct cname . decls $
-            [ go 0 ctorStruct [] ts
-            , typedef $ innerType ctorStruct
-            ]
+    ctorStruct     = "__ctor_top_local"
+    elimStruct     = "__elim_top_local"
+
+    primDataStruct = "__data"
+
+    applyAlt       = "apply_alt"
+
+    -- Pretty prints a single data constructor.
+    defineCtor (DataCon cname ts) n = struct cname . decls $
+        [ go 0 ctorStruct [] ts
+        , typedef $ innerType ctorStruct
+        ]
       where
         go _ name args [] = struct name . typedef . concat $
-            [ "__data<"
+            [ primDataStruct
+            , "<"
             , show n
             , ", dummy"
-            , concatMap (\x -> ", typename " ++ x ++ "::type") (reverse args)
+            , concatMap ((", " ++) . innerType) (reverse args)
             , ">"
             ]
 
@@ -144,6 +189,7 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
             localA = localArg u
             localS = localStruct u
 
+    -- Pretty prints an eliminator for the whole data type.
     defineElim vs = struct (firstToLower name) . decls $
         [ go 0 elimStruct [] vs
         , typedef $ innerType elimStruct
@@ -153,12 +199,19 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
         firstToLower (c:cs) = toLower c:cs
 
         go _ name args [] =
-            struct name . struct "type" . decls . intersperse "\n" $
-                "template <typename>\nstruct apply_alt;\n"  -- Forward declaration.
-              : zipWith3 handleCase vs (reverse args) [0 ..]
-             ++ [ template "__t" "apply" $
-                      typedef "typename apply_alt<typename __t::type>::type" -- TODO: make this nicer
+            struct name . struct ty . decls . intersperse "\n" $
+                [ fwdTemplate applyAlt
                 ]
+             ++   zipWith3 handleCase vs (reverse args) [0 ..]
+             ++ [ template typeArg apply . typedef . innerType . concat $
+                    [ applyAlt
+                    , "<"
+                    , innerType typeArg
+                    , ">"
+                    ]
+                ]
+          where
+            typeArg  = "__type_arg"
 
         go u name args (_:vs) = innerApply localA name . decls $
             [ go (u + 1) localS (localA:args) vs
@@ -168,24 +221,41 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
             localA = localArg u
             localS = localStruct u
 
+        -- Pretty prints a @template@ specialization which deconstructs
+        -- @n@-th constructor and applies the corresponding elimination
+        -- function to all its fields.
         handleCase (DataCon _ ts) arg n = concat $
             [ "template <typename dummy"
             , concatMap (", typename " ++) args
-            , ">\nstruct apply_alt<__data<"
+            , ">\nstruct "
+            , applyAlt
+            , "<"
+            , primDataStruct
+            , "<"
             , show n
             , ", dummy"
             , concatMap (", " ++) args
-            , "> >\n{\n"
+            , "> >"
+            , lbrace
             , decls $
-                wrapFields ++
-                [ prettyExpr localS . foldl1 App . map Var $ arg:map (extra ++)args
+                  wrapFields
+             ++ [ prettyExpr localS . foldl1 App . map Var $
+                      arg:map (extra ++) args
                 , typedef $ innerType localS
                 ]
-            , "\n};\n"
+            , rbrace
             ]
           where
-            args = zipWith (\_ n -> fieldA ++ show n) ts [0 ..]
+            -- Names of all constructor fields.
+            args = zipWith (const $ (fieldA ++) . show) ts [0 ..]
 
+            -- Create a wrapper @struct@ures so the data type can
+            -- contain the values directly rather than just the
+            -- expression names.
+            --
+            -- This would otherwise lead to all kinds of problems with
+            -- expressions not being interchangeable even though their
+            -- values are.
             wrapFields = map wrapStruct args
               where
                 wrapStruct name = struct (extra ++ name) $
@@ -193,10 +263,12 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
 
             fieldA = "__field_arg"
             localS = "__local_case"
+
+            -- Prefix for the wrapped structures.
             extra  = "__extra"
 
 
-
+-- | Pretty prints a value definition.
 prettyValDef :: ValueDef -> String
 prettyValDef (ValueDef name expr) =
     struct name . decls $
@@ -206,6 +278,8 @@ prettyValDef (ValueDef name expr) =
   where
     defStruct = "__def"
 
+-- | Pretty prints and expression given a name of @struct@ it should be
+--   declared in.
 prettyExpr :: String  -- ^ Name of the @struct@.
            -> Expr
            -> String

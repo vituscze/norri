@@ -1,3 +1,6 @@
+-- | Provides main parsers for the language.
+--
+--   TODO: Deal with C++ keywords and implementation reserved keywords.
 module Compiler.Parser
     (
     -- * Expressions
@@ -72,6 +75,7 @@ manyFactors = foldl1 App <$> many1 factor
 exprOp :: Parser (Expr -> Type -> Expr) -> Parser Expr
 exprOp colon = manyFactors >>= ((<|>) <$> lassocP <*> return)
   where
+    -- Implementation inspired by 'buildExpressionParser' from parsec.
     lassocP x = do
         f <- colon
         t <- typ
@@ -160,13 +164,12 @@ defOrSig = lowIdent >>= \i ->
     (Value <$> def i) <|> (Type <$> typeSig i)
 
 
--- TODO: get rid of try by factoring out identifier recognition
 -- | Parses a 'TopLevel' entity.
 topLevel :: Parser TopLevel
 topLevel = (Data <$> dataDef) <|> defOrSig
 
 -- | Parses whole 'Module'.
 --
---   Parses everything in the input stream.
+--   Consumes everything in the input stream.
 file :: Parser Module
 file = Module <$> (everything $ topLevel `sepBy` semi)

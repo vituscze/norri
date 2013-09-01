@@ -1,3 +1,5 @@
+-- | Provides data type representation for the abstract syntax tree of
+--   the language.
 module Compiler.AST
     (
     -- * Module structure
