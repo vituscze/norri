@@ -175,7 +175,9 @@ prettyDataDef (DataDef (TyCon tyConName _) variants) = decls
     applyAlt       = "apply_alt"
 
     -- Pretty prints a single data constructor.
-    defineCtor :: Variant -> Int -> String
+    defineCtor :: Variant  -- ^ Data constructor.
+               -> Int      -- ^ Numeric suffix for @struct@s.
+               -> String
     defineCtor (DataCon cname ts) n = struct cname . decls $
         [ go 0 ctorStruct [] ts
         , typedef $ innerType ctorStruct
@@ -210,7 +212,11 @@ prettyDataDef (DataDef (TyCon tyConName _) variants) = decls
         firstToLower []     = []
         firstToLower (c:cs) = toLower c:cs
 
-        go :: Int -> String -> [String] -> [Variant] -> String
+        go :: Int        -- ^ Numeric suffix for @struct@s.
+           -> String     -- ^ Outer @struct@ name.
+           -> [String]   -- ^ Names of eliminator arguments.
+           -> [Variant]  -- ^ Data constructors.
+           -> String
         go _ name args [] =
             struct name . struct ty . decls . intersperse "\n" $
                 [ fwdTemplate applyAlt
@@ -237,7 +243,10 @@ prettyDataDef (DataDef (TyCon tyConName _) variants) = decls
         -- Pretty prints a @template@ specialization which deconstructs
         -- @n@-th constructor and applies the corresponding elimination
         -- function to all its fields.
-        handleCase :: Variant -> String -> Int -> String
+        handleCase :: Variant  -- ^ 'Variant' to be pretty printed.
+                   -> String   -- ^ Argument name.
+                   -> Int      -- ^ Argument position.
+                   -> String
         handleCase (DataCon _ ts) arg n = concat
             [ "template <typename "
             , dummy
@@ -305,7 +314,10 @@ prettyExpr = go (0 :: Int)
     leftStruct  n = "__left"  ++ show n
     rightStruct n = "__right" ++ show n
 
-    go :: Int -> String -> Expr -> String
+    go :: Int     -- ^ Numeric suffix for @struct@s.
+       -> String  -- ^ Outer @struct@ name.
+       -> Expr    -- ^ Expression to be pretty printed.
+       -> String
     go _ name (Var v) =
         struct name . typedef . innerType $ v
 
