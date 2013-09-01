@@ -172,4 +172,4 @@ topLevel = (Data <$> dataDef) <|> defOrSig
 --
 --   Consumes everything in the input stream.
 file :: Parser Module
-file = Module <$> (everything $ topLevel `sepBy` semi)
+file = Module <$> everything (topLevel `sepBy` semi)

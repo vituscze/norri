@@ -1,5 +1,9 @@
 -- | Allows the abstract syntax tree to be pretty printed as a template
 --   C++ code.
+--
+--   Future work: abstract away from the direct 'String' handling;
+--   abstract representation of the structure of pretty printed C++
+--   code would allow for more flexibility and type safety.
 module Compiler.Pretty
     (
     -- * Module pretty printing
@@ -149,7 +153,7 @@ prettyType _ = ""
 --   function will automatically define an appropriate eliminator for the
 --   data type.
 prettyDataDef :: DataDef -> String
-prettyDataDef (DataDef (TyCon name _) variants) = decls $
+prettyDataDef (DataDef (TyCon tyConName _) variants) = decls
     [ intercalate sep $ zipWith defineCtor variants [0 ..]
     , defineElim variants
     ]
@@ -167,11 +171,13 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
     applyAlt       = "apply_alt"
 
     -- Pretty prints a single data constructor.
+    defineCtor :: Variant -> Int -> String
     defineCtor (DataCon cname ts) n = struct cname . decls $
         [ go 0 ctorStruct [] ts
         , typedef $ innerType ctorStruct
         ]
       where
+        go :: Int -> String -> [String] -> [Type] -> String
         go _ name args [] = struct name . typedef . concat $
             [ primDataStruct
             , "<"
@@ -181,8 +187,8 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
             , ">"
             ]
 
-        go u name args (_:ts) = innerApply localA name . decls $
-                [ go (u + 1) localS (localA:args) ts
+        go u name args (_:rest) = innerApply localA name . decls $
+                [ go (u + 1) localS (localA:args) rest
                 , typedef $ innerType localS
                 ]
           where
@@ -190,7 +196,8 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
             localS = localStruct u
 
     -- Pretty prints an eliminator for the whole data type.
-    defineElim vs = struct (firstToLower name) . decls $
+    defineElim :: [Variant] -> String
+    defineElim vs = struct (firstToLower tyConName) . decls $
         [ go 0 elimStruct [] vs
         , typedef $ innerType elimStruct
         ]
@@ -198,6 +205,7 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
         firstToLower []     = []
         firstToLower (c:cs) = toLower c:cs
 
+        go :: Int -> String -> [String] -> [Variant] -> String
         go _ name args [] =
             struct name . struct ty . decls . intersperse "\n" $
                 [ fwdTemplate applyAlt
@@ -213,8 +221,8 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
           where
             typeArg  = "__type_arg"
 
-        go u name args (_:vs) = innerApply localA name . decls $
-            [ go (u + 1) localS (localA:args) vs
+        go u name args (_:rest) = innerApply localA name . decls $
+            [ go (u + 1) localS (localA:args) rest
             , typedef $ innerType localS
             ]
           where
@@ -224,7 +232,8 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
         -- Pretty prints a @template@ specialization which deconstructs
         -- @n@-th constructor and applies the corresponding elimination
         -- function to all its fields.
-        handleCase (DataCon _ ts) arg n = concat $
+        handleCase :: Variant -> String -> Int -> String
+        handleCase (DataCon _ ts) arg n = concat
             [ "template <typename dummy"
             , concatMap (", typename " ++) args
             , ">\nstruct "
@@ -247,7 +256,7 @@ prettyDataDef (DataDef (TyCon name _) variants) = decls $
             ]
           where
             -- Names of all constructor fields.
-            args = zipWith (const $ (fieldA ++) . show) ts [0 ..]
+            args = zipWith (const $ (fieldA ++) . show) ts [0 :: Int ..]
 
             -- Create a wrapper @struct@ures so the data type can
             -- contain the values directly rather than just the
@@ -289,6 +298,7 @@ prettyExpr = go (0 :: Int)
     leftStruct  n = "__left"  ++ show n
     rightStruct n = "__right" ++ show n
 
+    go :: Int -> String -> Expr -> String
     go _ name (Var v) =
         struct name . typedef . innerType $ v
 
@@ -317,15 +327,14 @@ prettyExpr = go (0 :: Int)
 
     go u name (Let dec expr) =
         struct name . decls $
-            map prettyValDef dec ++
-            [ go (u + 1) local expr
+              map prettyValDef dec
+         ++ [ go (u + 1) local expr
             , typedef $ innerType local
             ]
       where
         local = localStruct u
 
-    go u name (SetType expr _) =
-        go u name expr
+    go u name (SetType expr _) = go u name expr
 
-    go u name (NumLit n) =
+    go _ name (NumLit n) =
         struct name . typedef $ "Int<" ++ show n ++ ">"
