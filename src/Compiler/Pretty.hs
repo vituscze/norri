@@ -124,6 +124,10 @@ apply = "apply"
 ty :: String
 ty = "type"
 
+-- | 'String' contanst for the @dummy@ type.
+dummy :: String
+dummy = "dummy"
+
 -- | Pretty prints whole module.
 --
 --   Prints all top level entities contained in module and separates them
@@ -182,7 +186,8 @@ prettyDataDef (DataDef (TyCon tyConName _) variants) = decls
             [ primDataStruct
             , "<"
             , show n
-            , ", dummy"
+            , ", "
+            , dummy
             , concatMap ((", " ++) . innerType) (reverse args)
             , ">"
             ]
@@ -234,7 +239,8 @@ prettyDataDef (DataDef (TyCon tyConName _) variants) = decls
         -- function to all its fields.
         handleCase :: Variant -> String -> Int -> String
         handleCase (DataCon _ ts) arg n = concat
-            [ "template <typename dummy"
+            [ "template <typename "
+            , dummy
             , concatMap (", typename " ++) args
             , ">\nstruct "
             , applyAlt
@@ -242,7 +248,8 @@ prettyDataDef (DataDef (TyCon tyConName _) variants) = decls
             , primDataStruct
             , "<"
             , show n
-            , ", dummy"
+            , ", "
+            , dummy
             , concatMap (", " ++) args
             , "> >"
             , lbrace
