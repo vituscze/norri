@@ -18,6 +18,11 @@ module Compiler.AST
     -- * Type definitions
     , TypeSig(..)
     , Type(..)
+
+    -- * Shortcuts
+    , Name
+    , TyName
+    , TyVar
     )
     where
 
@@ -67,7 +72,8 @@ data ValueDef
     deriving (Show)
 
 -- | AST for an expression, which can be either a variable, lambda abstraction,
---   application of two expressions or a @let@ declaration.
+--   application of two expressions, a @let@ declaration, numeric literal
+--   or fix point combinator.
 data Expr
     = Var Name             -- ^ Single variable.
     | Lam Name Expr        -- ^ Lambda abstraction.
@@ -76,6 +82,7 @@ data Expr
                            --   is represented as @Let [[decls]] [[expr]]@.
     | SetType Expr Type    -- ^ Explicit declaration of expression type.
     | NumLit Integer       -- ^ Integer literal.
+    | Fix Name Expr        -- ^ Fix point operator.
     deriving (Show)
 
 
@@ -91,4 +98,5 @@ data Type
     = TyData TyName    -- ^ Concrete type.
     | TyVar TyVar      -- ^ Type variable.
     | TyApp Type Type  -- ^ Application of a type constructor.
+    | TyArr Type Type  -- ^ Function types.
     deriving (Show)
