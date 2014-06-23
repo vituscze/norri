@@ -123,8 +123,7 @@ manyTyFactors = foldl1 TyApp <$> many1 tyFactor
 typ :: Parser Type
 typ = Ex.buildExpressionParser table manyTyFactors
   where
-    table = [[Ex.Infix (reservedOp "->" *> pure arrow) Ex.AssocRight]]
-    arrow = TyApp . TyApp (TyData "->")
+    table = [[Ex.Infix (reservedOp "->" *> pure TyArr) Ex.AssocRight]]
 
 -- | Parser for a type signature 'TypeSig'.
 typeSig :: String -> Parser TypeSig
