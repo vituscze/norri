@@ -22,6 +22,7 @@ import Text.Parsec.Language
 import Text.Parsec.String (Parser)
 import qualified Text.Parsec.Token as Tok
 
+-- TODO: Add C++ keywords and fix.
 lexer :: Tok.TokenParser st
 lexer = Tok.makeTokenParser style
   where
