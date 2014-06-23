@@ -357,3 +357,5 @@ prettyExpr = go (0 :: Int)
 
     go _ name (NumLit n) =
         struct name . typedef $ "Int<" ++ show n ++ ">"
+
+    go u name (Fix x expr) = go u name (App (Var "fix") (Lam x expr))
