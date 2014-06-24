@@ -34,5 +34,6 @@ s @@ t = Map.foldrWithKey (\u -> add u . apply s) s t
 apply :: Subst -> Type -> Type
 apply s (TyData n)   = TyData n
 apply s (TyVar v)    = find v s
+apply s (TyGen i)    = TyGen i
 apply s (TyApp t u)  = TyApp (apply s t) (apply s u)
 apply s (TyArr t u)  = TyArr (apply s t) (apply s u)
