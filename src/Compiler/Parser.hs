@@ -13,6 +13,7 @@ module Compiler.Parser
     -- * Type signatures
     , typ
     , typeSig
+    , scheme
 
     -- * Data definitions
     , dataDef
@@ -32,6 +33,7 @@ import Text.Parsec.String (Parser)
 
 import Compiler.AST
 import Compiler.Lexer
+import Compiler.TypeChecking.Scheme  -- For type quantification.
 
 -- | Parses a variable of any sort (starting with lower or upper case letter).
 var :: Parser Expr
@@ -72,13 +74,13 @@ manyFactors = foldl1 App <$> many1 factor
 
 -- | Parses an 'Expr' given a parser for an operator for forcing
 --   type unification.
-exprOp :: Parser (Expr -> Type -> Expr) -> Parser Expr
+exprOp :: Parser (Expr -> Scheme -> Expr) -> Parser Expr
 exprOp colon = manyFactors >>= ((<|>) <$> lassocP <*> return)
   where
     -- Implementation inspired by 'buildExpressionParser' from parsec.
     lassocP x = do
         f <- colon
-        t <- typ
+        t <- scheme
         lassocP1 (f x t)
 
     lassocP1 = (<|>) <$> lassocP <*> return
@@ -125,9 +127,13 @@ typ = Ex.buildExpressionParser table manyTyFactors
   where
     table = [[Ex.Infix (reservedOp "->" *> pure TyArr) Ex.AssocRight]]
 
+-- | Parser for a type 'Scheme'.
+scheme :: Parser Scheme
+scheme = (\t -> quantify (freeT t) t) <$> typ
+
 -- | Parser for a type signature 'TypeSig'.
 typeSig :: String -> Parser TypeSig
-typeSig s = Sig s <$> (reservedOp ":" *> typ)
+typeSig s = Sig s <$> (reservedOp ":" *> scheme)
 
 -- | Parses a vertical bar.
 vbar :: Parser ()
