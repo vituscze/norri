@@ -5,8 +5,13 @@ module Compiler.TypeChecking.Context
     , KindCtx
 
     -- * Types.
-    , Scheme(..)
     , TyCtx
+
+    -- * Type signatures.
+    , SigCtx
+
+    -- * Type inference context.
+    , TICtx
     )
     where
 
@@ -29,3 +34,9 @@ type KindCtx = Map Name Kind
 
 -- | Typing context.
 type TyCtx = Map Name Scheme
+
+-- | Declared type signatures.
+type SigCtx = Map Name Scheme
+
+-- | All contexts needed for type inference.
+type TICtx = (KindCtx, TyCtx, SigCtx)
