@@ -10,10 +10,13 @@ import Control.Monad.State
 import qualified Data.Map as Map
 import Data.Map (Map)
 import Data.Maybe
+import qualified Data.Set as Set
+import Data.Set (Set, (\\))
 
 import Compiler.AST
 import Compiler.TypeChecking.Context
 import Compiler.TypeChecking.Error
+import Compiler.TypeChecking.Free
 import Compiler.TypeChecking.Subst
 import Compiler.TypeChecking.Unify
 
@@ -136,10 +139,19 @@ inferExpr ctx (App e1 e2) = do
     return t
 inferExpr ctx (Let [] e) = inferExpr ctx e
 inferExpr ctx (Let (d:ds) e) = undefined -- infer as Let [d] (Let ds e)
-inferExpr ctx (SetType e t) = do
-    checkKind ctx t
-    inferExpr ctx e
-    -- compare the types here
+inferExpr ctx (SetType e ts) = do  -- todo: refactor into separate function
+    checkKind ctx ts
+    t  <- freshInst ts
+    te <- inferExpr ctx e
+    unifyE t te
+    s  <- getSubst
+    let t'   = apply s t
+        qvar = free t' \\ free (apply s ctx)
+        nts  = quantify qvar t'
+    if nts /= ts -- TODO: forall a b. a -> b   and forall b a. b -> a  should
+                 -- be threated as being equal
+        then throwError . TError $ TypeTooGeneral
+        else return te
 inferExpr ctx (NumLit _) = return (TyData "Int")
 inferExpr ctx (Fix x e) = do
     t  <- newVar
