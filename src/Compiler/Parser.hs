@@ -33,7 +33,7 @@ import Text.Parsec.String (Parser)
 
 import Compiler.AST
 import Compiler.Lexer
-import Compiler.TypeChecking.Scheme  -- For type quantification.
+import Compiler.TypeChecking.Free  -- For type quantification.
 
 -- | Parses a variable of any sort (starting with lower or upper case letter).
 var :: Parser Expr
@@ -129,7 +129,7 @@ typ = Ex.buildExpressionParser table manyTyFactors
 
 -- | Parser for a type 'Scheme'.
 scheme :: Parser Scheme
-scheme = (\t -> quantify (freeT t) t) <$> typ
+scheme = (\t -> quantify (free t) t) <$> typ
 
 -- | Parser for a type signature 'TypeSig'.
 typeSig :: String -> Parser TypeSig
