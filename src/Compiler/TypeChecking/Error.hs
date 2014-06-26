@@ -17,6 +17,9 @@ data KindError
 data ScopeError
     = UnboundVariable Name
     | UndefinedType TyName
+    | ValueRedefined Name
+    | TypeRedefined TyName
+    | TypeSigRedefined Name
     deriving (Eq, Show)
 
 data TypeError
