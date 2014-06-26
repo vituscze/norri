@@ -112,9 +112,9 @@ data Type
 -- | 'Type's need special equality because for example types
 --   @forall a b. a -> b@ and @forall a b. b -> a@ should be equal.
 --
---   This implementation basically checks, if the other constructors are equal
---   and for 'TyGen' constructors, there exists a bijective function from
---   'TyGen's on one side to 'TyGen's on the other side.
+--   This implementation basically checks if constructors other than 'TyGen' are
+--   equal and if there exists a bijective function from 'TyGen's on one side to
+--   'TyGen's on the other side.
 instance Eq Type where
     t == u = isJust (go (Map.empty, Set.empty) t u)
       where
