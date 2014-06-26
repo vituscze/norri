@@ -125,6 +125,21 @@ checkKind (kc, _, _) (Scheme _ t) = do
         when (ti /= 0 || ui /= 0) . throwError . KError $ KindMismatch
         return 0
 
+quantifyCtx :: Infer Type Scheme
+quantifyCtx ctx t = do
+    s <- getSubst
+    let t'   = apply s t
+        qvar = free t' \\ free (apply s ctx)
+    return (quantify qvar t')
+
+setType :: Type -> Infer Scheme ()
+setType t ctx ts = do
+    checkKind ctx ts
+    tf <- freshInst ts
+    unifyE tf t
+    nts <- quantifyCtx ctx tf
+    when (nts /= ts) . throwError . TError $ TypeTooGeneral
+
 inferExpr :: Infer Expr Type
 inferExpr ctx (Var v)   = findCtx ctx v >>= freshInst
 inferExpr ctx (Lam x e) = do
@@ -138,23 +153,26 @@ inferExpr ctx (App e1 e2) = do
     unifyE (TyArr te2 t) te1
     return t
 inferExpr ctx (Let [] e) = inferExpr ctx e
-inferExpr ctx (Let (d:ds) e) = undefined -- infer as Let [d] (Let ds e)
-inferExpr ctx (SetType e ts) = do  -- todo: refactor into separate function
-    checkKind ctx ts
-    t  <- freshInst ts
+inferExpr ctx (Let (d:ds) e) = do
+    (_, ctx') <- inferValueDef ctx d
+    inferExpr ctx' (Let ds e)
+inferExpr ctx (SetType e ts) = do
     te <- inferExpr ctx e
-    unifyE t te
-    s  <- getSubst
-    let t'   = apply s t
-        qvar = free t' \\ free (apply s ctx)
-        nts  = quantify qvar t'
-    if nts /= ts -- TODO: forall a b. a -> b   and forall b a. b -> a  should
-                 -- be threated as being equal
-        then throwError . TError $ TypeTooGeneral
-        else return te
+    setType te ctx ts
+    return te
 inferExpr ctx (NumLit _) = return (TyData "Int")
 inferExpr ctx (Fix x e) = do
     t  <- newVar
     te <- inferExpr (addCtx x (Scheme 0 t) ctx) e
     unifyE t te
     return t
+
+inferValueDef :: Infer ValueDef (Scheme, TICtx)
+inferValueDef ctx (ValueDef n e) = do
+    te  <- inferExpr ctx e
+    tes <- quantifyCtx ctx te
+    return (tes, addCtx n tes ctx)
+
+-- | Kind check data type definition and add all constructors and the
+--   eliminator into type inference context.
+--inferDataDef :: Infer DataDef TICtx
