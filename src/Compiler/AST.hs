@@ -27,6 +27,12 @@ module Compiler.AST
     )
     where
 
+import qualified Data.Map as Map
+import Data.Map (Map)
+import Data.Maybe
+import qualified Data.Set as Set
+import Data.Set (Set)
+
 type Name = String
 
 type TyName = String
@@ -101,7 +107,36 @@ data Type
     | TyVar TyVar      -- ^ Type variable.
     | TyApp Type Type  -- ^ Application of a type constructor.
     | TyArr Type Type  -- ^ Function types.
-    deriving (Eq, Show)
+    deriving (Show)
+
+-- | 'Type's need special equality because for example types
+--   @forall a b. a -> b@ and @forall a b. b -> a@ should be equal.
+--
+--   This implementation basically checks, if the other constructors are equal
+--   and for 'TyGen' constructors, there exists a bijective function from
+--   'TyGen's on one side to 'TyGen's on the other side.
+instance Eq Type where
+    t == u = isJust (go (Map.empty, Set.empty) t u)
+      where
+        bToM True  x = Just x
+        bToM False _ = Nothing
+
+        go ms (TyData d1) (TyData d2) = bToM (d1 == d2) ms
+        go (m, s) (TyGen i1) (TyGen i2) = case Map.lookup i1 m of
+            Just i2'
+                | i2 == i2' -> return (m, s)
+                | otherwise -> Nothing
+            _
+                | i2 `Set.member` s -> Nothing
+                | otherwise -> return (Map.insert i1 i2 m, Set.insert i2 s)
+        go ms (TyVar v1) (TyVar v2)   = bToM (v1 == v2) ms
+        go ms (TyApp t1 t2) (TyApp u1 u2) = do
+            ms' <- go ms t1 u1
+            go ms' t2 u2
+        go ms (TyArr t1 t2) (TyArr u1 u2) = do
+            ms' <- go ms t1 u1
+            go ms' t2 u2
+        go _ _ _ = Nothing
 
 -- | A type scheme, which is a 'Type' with possibly quantified type variables.
 --   The number of quantified variables is given by the first field.
