@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
 -- | Implementation of type substitutions.
 module Compiler.TypeChecking.Subst
     where
@@ -7,6 +8,7 @@ import Data.Map (Map)
 import Data.Maybe
 
 import Compiler.AST
+import Compiler.TypeChecking.Context
 
 -- | A substitution is a map from variables to types.
 type Subst = Map TyVar Type
@@ -30,10 +32,21 @@ find v = maybe (TyVar v) id . Map.lookup v
 (@@) :: Subst -> Subst -> Subst
 s @@ t = Map.foldrWithKey (\u -> add u . apply s) s t
 
--- | Applies given substitution to a type.
-apply :: Subst -> Type -> Type
-apply s (TyData n)   = TyData n
-apply s (TyVar v)    = find v s
-apply s (TyGen i)    = TyGen i
-apply s (TyApp t u)  = TyApp (apply s t) (apply s u)
-apply s (TyArr t u)  = TyArr (apply s t) (apply s u)
+class Apply t where
+    apply :: Subst -> t -> t
+
+instance Apply Type where
+    apply s (TyData n)   = TyData n
+    apply s (TyVar v)    = find v s
+    apply s (TyGen i)    = TyGen i
+    apply s (TyApp t u)  = TyApp (apply s t) (apply s u)
+    apply s (TyArr t u)  = TyArr (apply s t) (apply s u)
+
+instance Apply Scheme where
+    apply s (Scheme i t) = Scheme i (apply s t)
+
+instance Apply TyCtx where
+    apply s m = Map.map (apply s) m
+
+instance Apply TICtx where
+    apply s (kc, tc, sc) = (kc, apply s tc, sc)
