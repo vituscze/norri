@@ -16,13 +16,18 @@ data KindError
 
 data ScopeError
     = UnboundVariable Name
-    | UndefinedType Name
+    | UndefinedType TyName
+    deriving (Eq, Show)
+
+data TypeError
+    = TypeTooGeneral
     deriving (Eq, Show)
 
 data TCError
     = UError UnificationError
     | KError KindError
     | SError ScopeError
+    | TError TypeError
     | UnknownError String
     deriving (Eq, Show)
 
