@@ -30,7 +30,7 @@ type Kind = Int
 --
 --   Used for kind checking of data definitions and user-declared types.
 --   Internal types have correct kind by construction.
-type KindCtx = Map Name Kind
+type KindCtx = Map TyName Kind
 
 -- | Typing context.
 type TyCtx = Map Name Scheme
