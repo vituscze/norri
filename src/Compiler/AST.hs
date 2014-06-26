@@ -57,7 +57,7 @@ data DataDef
 -- | AST for a type constructor, which consits of its name and a (possibly
 --   empty) list of type variables.
 data TyCon
-    = TyCon TyName [TyVar]  -- TODO: abstract representation for type variables
+    = TyCon TyName [TyVar]
     deriving (Eq, Show)
 
 -- | AST for a variant of a data type, which consits of a named constructor
