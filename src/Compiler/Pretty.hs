@@ -124,7 +124,7 @@ apply = "apply"
 ty :: String
 ty = "type"
 
--- | 'String' contanst for the @dummy@ type.
+-- | 'String' constant for the @dummy@ type.
 dummy :: String
 dummy = "dummy"
 
