@@ -1,5 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Compiler.TypeChecking.Unify
+    (
+    -- * Unification.
+      unify
+    )
     where
 
 import Control.Monad
@@ -9,13 +13,8 @@ import Data.Set (Set)
 
 import Compiler.AST
 import Compiler.TypeChecking.Error
+import Compiler.TypeChecking.Free
 import Compiler.TypeChecking.Subst
-
-free :: Type -> Set TyVar
-free (TyData d)    = Set.empty
-free (TyVar v)     = Set.singleton v
-free (TyApp t u)   = free t `Set.union` free u
-free (TyArr t u)   = free t `Set.union` free u
 
 unify :: (MonadError TCError m) => Type -> Type -> m Subst
 unify (TyData d) (TyData e)
