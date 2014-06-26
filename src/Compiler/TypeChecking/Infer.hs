@@ -134,7 +134,6 @@ quantifyCtx ctx t = do
 
 setType :: Type -> Infer Scheme ()
 setType t ctx ts = do
-    checkKind ctx ts
     tf <- freshInst ts
     unifyE tf t
     nts <- quantifyCtx ctx tf
@@ -154,9 +153,10 @@ inferExpr ctx (App e1 e2) = do
     return t
 inferExpr ctx (Let [] e) = inferExpr ctx e
 inferExpr ctx (Let (d:ds) e) = do
-    (_, ctx') <- inferValueDef ctx d
+    ctx' <- inferValueDef ctx d
     inferExpr ctx' (Let ds e)
 inferExpr ctx (SetType e ts) = do
+    checkKind ctx ts
     te <- inferExpr ctx e
     setType te ctx ts
     return te
@@ -167,12 +167,33 @@ inferExpr ctx (Fix x e) = do
     unifyE t te
     return t
 
-inferValueDef :: Infer ValueDef (Scheme, TICtx)
-inferValueDef ctx (ValueDef n e) = do
+inferValueDef :: Infer ValueDef TICtx
+inferValueDef ctx@(_, _, sc) (ValueDef n e) = do
     te  <- inferExpr ctx e
-    tes <- quantifyCtx ctx te
-    return (tes, addCtx n tes ctx)
+    tes <- case Map.lookup n sc of
+        Just ts -> setType te ctx ts >> return ts
+        Nothing -> quantifyCtx ctx te
+    return $ addCtx n tes ctx
 
 -- | Kind check data type definition and add all constructors and the
 --   eliminator into type inference context.
---inferDataDef :: Infer DataDef TICtx
+inferDataDef :: Infer DataDef TICtx
+inferDataDef = undefined
+
+inferTopLevel :: Infer TopLevel TICtx
+inferTopLevel ctx@(kc, _, _) (Data dd@(DataDef (TyCon n _) _)) = do
+    -- Do not allow multiple definitions of one type.
+    when (n `Map.member` kc) . throwError . SError $ TypeRedefined n
+    inferDataDef ctx dd
+inferTopLevel ctx@(_, tc, _) (Value vd@(ValueDef n _)) = do
+    -- Do not allow multiple definitions of one value.
+    when (n `Map.member` tc) . throwError . SError $ ValueRedefined n
+    inferValueDef ctx vd
+inferTopLevel ctx@(kc, tc,sc) (Type (Sig n ts)) = do
+    -- Do not allow multiple type signatures for one value. Also make sure
+    -- that the code does not specify signature AFTER the actual definition.
+    -- TODO: Perhaps use separate errors?
+    when (n `Map.member` sc || n `Map.member` tc) . throwError . SError $
+        TypeSigRedefined n
+    checkKind ctx ts
+    return (kc, tc, Map.insert n ts sc)
