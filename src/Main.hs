@@ -30,9 +30,9 @@ main = do
     ast <- case parse file "" input of
         Right ast -> return ast
         Left  err -> putStrLn "Parsing error:" >> print err >> exitFailure
-    let ast' = freshModule (fixifyModule ast)
+    let ast' = fixifyModule ast
     case runTI (inferModule defaultCtx ast') of
         Right _   -> return ()
         Left  err -> putStrLn "Type checking error:" >> print err >> exitFailure
-    writeFile "output.cpp" (prettyModule ast')
+    writeFile "output.cpp" (prettyModule (freshModule ast'))
 
