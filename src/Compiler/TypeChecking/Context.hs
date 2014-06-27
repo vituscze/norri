@@ -1,3 +1,5 @@
+-- | Contexts used during type inference - kind contexts, typing contexts,
+--   type signature contexts.
 module Compiler.TypeChecking.Context
     (
     -- * Kinds.

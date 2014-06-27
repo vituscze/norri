@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+-- | Type unification.
 module Compiler.TypeChecking.Unify
     (
     -- * Unification.
@@ -16,6 +17,17 @@ import Compiler.TypeChecking.Error
 import Compiler.TypeChecking.Free
 import Compiler.TypeChecking.Subst
 
+-- | Attempts to unify two types. If this operation is successful, the
+--   resulting substitution is returned (in a monadic context).
+--
+--   If the unification is not successful, an error is thrown in the
+--   surrounding error monad.
+--
+-- >>> unify (Var "a") (TyArr (Var "b") (Var "b"))
+-- Right (Map.fromList [("a", TyArr (Var "b") (Var "b"))])
+--
+-- >>> unify (TyData "Int") (TyData "Char")
+-- Left (UError $ TyConMismatch (TyData "Int") (TyData "Char"))
 unify :: (MonadError TCError m) => Type -> Type -> m Subst
 unify (TyData d) (TyData e)
     | d == e = return empty
