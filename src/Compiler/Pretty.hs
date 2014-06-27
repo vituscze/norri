@@ -6,16 +6,16 @@
 --   code would allow for more flexibility and type safety.
 module Compiler.Pretty
     (
-    -- * Module pretty printing
+    -- * Module pretty printing.
       prettyModule
     , prettyTopLevel
 
-    -- * Top level entities pretty printing
+    -- * Top level entities pretty printing.
     , prettyType
     , prettyDataDef
     , prettyValDef
 
-    -- * Expression pretty printing
+    -- * Expression pretty printing.
     , prettyExpr
     )
     where
@@ -358,4 +358,6 @@ prettyExpr = go (0 :: Int)
     go _ name (NumLit n) =
         struct name . typedef $ "Int<" ++ show n ++ ">"
 
+    -- Fixed point operator is transformed into language primitive
+    -- "fix" and a lambda abstraction.
     go u name (Fix x expr) = go u name (App (Var "fix") (Lam x expr))

@@ -66,6 +66,8 @@ fixify v@(ValueDef n e)
     fixify' (Fix x e)     = Fix x (fixify' e)
     fixify' e             = e
 
+-- | Removes direction recursion in whole module by applying 'fixify'
+--   to all 'ValueDef'initions.
 fixifyModule :: Module -> Module
 fixifyModule (Module tls) = Module (map go tls)
   where
@@ -121,6 +123,11 @@ rename s e = evalState (runReaderT (go e) Map.empty) s
 fresh :: ValueDef -> ValueDef
 fresh (ValueDef n e) = ValueDef n (rename 0 e)
 
+-- | Replaces all variables in a module with fresh names.
+--
+--   This is done by using 'fresh' on all 'ValueDef'initions. Note that two
+--   different definitions may share same variables, but this is not an
+--   issue in the generated C++ code.
 freshModule :: Module -> Module
 freshModule (Module tls) = Module (map go tls)
   where
