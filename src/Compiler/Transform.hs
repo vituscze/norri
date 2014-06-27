@@ -6,10 +6,12 @@ module Compiler.Transform
 
     -- * Recursion removal.
     , fixify
+    , fixifyModule
 
     -- * Variables renaming.
     , rename
     , fresh
+    , freshModule
     )
     where
 
@@ -52,7 +54,7 @@ free (Let decls e) = (free e \\ names) `Set.union` vars
 fixify :: ValueDef -> ValueDef
 fixify v@(ValueDef n e)
   | n `Set.member` vars = ValueDef n (Fix n (fixify' e))
-  | otherwise           = v
+  | otherwise           = ValueDef n (fixify' e)
   where
     vars = free e
 
@@ -63,6 +65,12 @@ fixify v@(ValueDef n e)
     fixify' (Let decls e) = Let (map fixify decls) e
     fixify' (Fix x e)     = Fix x (fixify' e)
     fixify' e             = e
+
+fixifyModule :: Module -> Module
+fixifyModule (Module tls) = Module (map go tls)
+  where
+    go (Value vd) = Value (fixify vd)
+    go other      = other
 
 -- | Internal monad transformer used for variable renaming. Maps variables of
 --   type @v@ to variables of type @v'@.
@@ -112,3 +120,9 @@ rename s e = evalState (runReaderT (go e) Map.empty) s
 --   will be replaced.
 fresh :: ValueDef -> ValueDef
 fresh (ValueDef n e) = ValueDef n (rename 0 e)
+
+freshModule :: Module -> Module
+freshModule (Module tls) = Module (map go tls)
+  where
+    go (Value vd) = Value (fresh vd)
+    go other      = other
