@@ -7,6 +7,7 @@ import Control.Applicative ((<$>))
 import Control.Monad
 import Control.Monad.Error
 import Control.Monad.State
+import Data.Char
 import qualified Data.Map as Map
 import Data.Map (Map)
 import Data.Maybe
@@ -175,10 +176,51 @@ inferValueDef ctx@(_, _, sc) (ValueDef n e) = do
         Nothing -> quantifyCtx ctx te
     return $ addCtx n tes ctx
 
+inferVariant :: Type -> Set TyVar -> Infer Variant TICtx
+inferVariant dt bound ctx@(_, tc, _) (DataCon n ts) = do
+    let ty = quantify bound (foldr1 TyArr (ts ++ [dt]))
+        fr = Set.toList (free ty)
+    -- The type of data constructor should be self-contained, it should
+    -- not contain any free type variables.
+    case fr of
+        []  -> return ()
+        u:_ -> throwError . SError $ UndefinedType u
+    when (n `Map.member` tc) . throwError . SError $ ValueRedefined n
+    return (addCtx n ty ctx)
+
+inferElim :: Type -> Set TyVar -> TyName -> Infer [Variant] TICtx
+inferElim dt bound n ctx@(_, tc, _) vars = do
+    z <- newVar
+    let TyVar z'  = z
+        tyV (DataCon _ ts) = foldr1 TyArr (ts ++ [z])
+        tyVs vars = foldr1 TyArr (map tyV vars ++ [dt, z])
+        bound'    = Set.insert z' bound
+        ty        = quantify bound' (tyVs vars)
+        fr        = Set.toList (free ty)
+    case fr of
+        []  -> return ()
+        u:_ -> throwError . SError $ UndefinedType u
+    let fToL (x:xs) = toLower x:xs
+        n'          = fToL n
+    when (n' `Map.member` tc) . throwError . SError $ ValueRedefined n
+    return (addCtx n' ty ctx)
+
 -- | Kind check data type definition and add all constructors and the
 --   eliminator into type inference context.
 inferDataDef :: Infer DataDef TICtx
-inferDataDef = undefined
+inferDataDef ctx0@(kc, tc, sc) (DataDef (TyCon n tvs) vs) = do
+    let tvs' = Set.fromList tvs
+        tvsc = Set.size tvs'
+    -- Declared type variables should be distinct.
+    when (length tvs /= tvsc) . throwError . SError $ TypeRedefined ""
+    -- TODO: Find the offending type variable
+
+    let dt   = foldl1 TyApp (TyData n:map TyVar tvs)
+        ctx1 = (Map.insert n tvsc kc, tc, sc)
+    -- Create type for constructors.
+    ctx2 <- inferElim dt tvs' n ctx1 vs
+    foldM (inferVariant dt tvs') ctx2 vs
+
 
 inferTopLevel :: Infer TopLevel TICtx
 inferTopLevel ctx@(kc, _, _) (Data dd@(DataDef (TyCon n _) _)) = do
@@ -197,3 +239,6 @@ inferTopLevel ctx@(kc, tc,sc) (Type (Sig n ts)) = do
         TypeSigRedefined n
     checkKind ctx ts
     return (kc, tc, Map.insert n ts sc)
+
+inferModule :: Infer Module TICtx
+inferModule ctx (Module tls) = foldM inferTopLevel ctx tls
