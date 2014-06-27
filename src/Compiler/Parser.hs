@@ -1,6 +1,4 @@
 -- | Provides main parsers for the language.
---
---   TODO: Deal with C++ keywords and implementation reserved keywords.
 module Compiler.Parser
     (
     -- * Expressions
@@ -99,7 +97,7 @@ def s = ValueDef s <$> (reservedOp "=" *> expr)
 defOnly :: Parser ValueDef
 defOnly = lowIdent >>= def
 
--- | Parses a type name, which is an 'identifier' startih with an upper
+-- | Parses a type name, which is an 'identifier' starting with an upper
 --   case letter.
 tyName :: Parser Type
 tyName = TyData <$> upIdent
@@ -140,8 +138,12 @@ vbar :: Parser ()
 vbar = reservedOp "|"
 
 -- | Parses a type constructor 'TyCon'.
+--
+--   Note that since eliminator's name is just a noncapitalized data type name,
+--   this parser also checks if this name won't conflict with any non language
+--   keyword.
 tyCon :: Parser TyCon
-tyCon = TyCon <$> upIdent
+tyCon = TyCon <$> up'Ident
               <*> many lowIdent
 
 -- | Parses a 'Variant' of a data type definition.
