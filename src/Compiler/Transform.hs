@@ -30,6 +30,9 @@ import Compiler.AST
 -- | Returns set of all free variables in a given expression.
 --
 --   Local definitions inside @Let@ also bind variables.
+--
+-- >>> free $ Lam "x" $ App (Var "x") (Var "y")
+-- Set.fromList ["y"]
 free :: Expr -> Set Name
 free (Var v)       = Set.singleton v
 free (Lam x e)     = free e \\ Set.singleton x

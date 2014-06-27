@@ -33,9 +33,13 @@ import Data.Maybe
 import qualified Data.Set as Set
 import Data.Set (Set)
 
+-- | Type alias for names of variables.
 type Name = String
 
+-- | Type alias for names of type constructors.
 type TyName = String
+
+-- | Type alias for names of type variables.
 type TyVar = String
 
 -- | AST for a module consists of a list of top level definitions and/or
@@ -115,6 +119,9 @@ data Type
 --   This implementation basically checks if constructors other than 'TyGen' are
 --   equal and if there exists a bijective function from 'TyGen's on one side to
 --   'TyGen's on the other side.
+--
+-- >>> TyArr (TyGen 0) (TyGen 1) == TyArr (TyGen 1) (TyGen 0)
+-- True
 instance Eq Type where
     t == u = isJust (go (Map.empty, Set.empty) t u)
       where
@@ -139,6 +146,7 @@ instance Eq Type where
         go _ _ _ = Nothing
 
 -- | A type scheme, which is a 'Type' with possibly quantified type variables.
+--
 --   The number of quantified variables is given by the first field.
 data Scheme = Scheme Int Type
     deriving (Eq, Show)
