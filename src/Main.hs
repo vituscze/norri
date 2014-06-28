@@ -46,4 +46,3 @@ main = do
         Right _   -> return ()
         Left  err -> putStrLn "Type checking error:" >> print err >> exitFailure
     writeFile output (prettyModule (freshModule ast'))
-
