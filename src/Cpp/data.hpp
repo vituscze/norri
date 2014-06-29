@@ -12,6 +12,7 @@ struct Int
 };
 
 template <bool b>
+struct Bool
 {
     static const bool value = b;
 };
