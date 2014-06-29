@@ -91,6 +91,7 @@ data Expr
                            --   is represented as @Let [[decls]] [[expr]]@.
     | SetType Expr Scheme  -- ^ Explicit declaration of expression type.
     | NumLit Integer       -- ^ Integer literal.
+    | BoolLit Bool         -- ^ Boolean literal.
     | Fix Name Expr        -- ^ Fix point operator.
     deriving (Eq, Show)
 

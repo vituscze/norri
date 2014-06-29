@@ -24,6 +24,7 @@ import Data.Char
 import Data.List
 
 import Compiler.AST
+import Utility
 
 -- | Left opening brace surrounded by newlines.
 lbrace :: String
@@ -357,6 +358,9 @@ prettyExpr = go (0 :: Int)
 
     go _ name (NumLit n) =
         struct name . typedef $ "Int<" ++ show n ++ ">"
+
+    go _ name (BoolLit b) =
+        struct name . typedef $ "Bool<" ++ uncap (show b) ++ ">"
 
     -- Fixed point operator is transformed into language primitive
     -- "fix" and a lambda abstraction.

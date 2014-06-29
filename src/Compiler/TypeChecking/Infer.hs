@@ -36,7 +36,6 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Except
 import Control.Monad.State
-import Data.Char
 import qualified Data.Map as Map
 import Data.Map (Map)
 import Data.Maybe
@@ -49,6 +48,7 @@ import Compiler.TypeChecking.Error
 import Compiler.TypeChecking.Free
 import Compiler.TypeChecking.Subst
 import Compiler.TypeChecking.Unify
+import Utility
 
 -- | A type inference monad is a combination of two state monads and one
 --   error monad: first one to keep track of current substitution, the second
@@ -211,6 +211,8 @@ inferExpr ctx (SetType e ts) = do
     return te
 inferExpr _   (NumLit _) =
     return $ TyData "Int"
+inferExpr _   (BoolLit _) =
+    return $ TyData "Bool"
 inferExpr ctx (Fix x e) = do
     t  <- newVar
     te <- inferExpr (addCtx x (Scheme 0 t) ctx) e
@@ -283,11 +285,7 @@ inferElim dt bound n ctx@(_, tc, _) vars = do
         u:_ -> throwError . SError $ UndefinedType u
 
     -- Name of the eliminator.
-    -- TODO: Move this to some module for helper functions.
-    let fToL []     = []
-        fToL (x:xs) = toLower x:xs
-
-        n' = fToL n
+    let n' = uncap n
     when (n' `Map.member` tc) . throwError . SError $ ValueRedefined n'
     return $ addCtx n' ty ctx
 

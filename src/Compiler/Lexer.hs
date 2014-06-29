@@ -27,6 +27,8 @@ import Text.Parsec.Language
 import Text.Parsec.String (Parser)
 import qualified Text.Parsec.Token as Tok
 
+import Utility
+
 -- | List of C++ keywords.
 reservedCpp :: [String]
 reservedCpp =
@@ -104,8 +106,7 @@ up'Ident = try (mfilter check upIdent) <?> msg
   where
     msg = "upper case identifier not conflicting with a keyword"
 
-    check []     = True
-    check (x:xs) = (toLower x:xs) `notElem` (reservedCpp ++ reservedImpl)
+    check str = uncap str `notElem` (reservedCpp ++ reservedImpl)
 
 -- | Parse an identifier which starts with a lower case letter.
 lowIdent :: Parser String

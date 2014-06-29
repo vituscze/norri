@@ -38,6 +38,7 @@ free (Lam x e)     = free e \\ Set.singleton x
 free (App e1 e2)   = free e1 `Set.union` free e2
 free (SetType e _) = free e
 free (NumLit _)    = Set.empty
+free (BoolLit _)   = Set.empty
 free (Fix x e)     = free e \\ Set.singleton x
 free (Let decls e) = (free e \\ names) `Set.union` vars
   where
@@ -108,6 +109,7 @@ rename s ex = evalState (runReaderT (go ex) Map.empty) s
     go (App e1 e2)   = App <$> go e1 <*> go e2
     go (SetType e t) = flip SetType t <$> go e
     go (NumLit n)    = return $ NumLit n
+    go (BoolLit b)   = return $ BoolLit b
     go (Fix x e)     = uncurry Fix <$> localInsert x (go e)
     go (Let decls e) = go' decls
       where
