@@ -25,6 +25,7 @@ import qualified Data.Set as Set
 import Data.Set (Set, (\\))
 
 import Compiler.AST
+import Utility
 
 -- | Return set of all free variables in a given expression.
 --
@@ -89,7 +90,7 @@ type RenameM a = ReaderT (Map Name Name) (State Int) a
 localInsert :: Name -> RenameM a -> RenameM (Name, a)
 localInsert s m = do
     s' <- state $ \n -> (n, n + 1)
-    let name = "_T" ++ show s'
+    let name = nameVar s'
     a  <- local (Map.insert s name) m
     return (name, a)
 

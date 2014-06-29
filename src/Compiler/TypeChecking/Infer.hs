@@ -82,7 +82,7 @@ newVar :: TI Type
 newVar = do
     i <- getCount
     putCount (i + 1)
-    return . TyVar $ "_t" ++ show i
+    return . TyVar . nameTyVar $ i
 
 -- | Replace 'TyGen' with freshly generated type variables.
 --
