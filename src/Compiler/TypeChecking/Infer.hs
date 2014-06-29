@@ -112,7 +112,7 @@ extend ns = do
     putSubst (ns @@ os)
 
 -- | Try to unify two types and add the resulting substitution to the
---   global one (via 'extend').
+--   global one.
 unifyE :: Type -> Type -> TI ()
 unifyE t u = do
     s <- getSubst
