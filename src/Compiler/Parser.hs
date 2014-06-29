@@ -56,12 +56,20 @@ letin = Let <$> (reserved "let"
 numLit :: Parser Expr
 numLit = NumLit <$> integer
 
+-- | Parse a boolean literal.
+boolLit :: Parser Expr
+boolLit = BoolLit <$>
+      ( True  <$ reserved "True"
+    <|> False <$ reserved "False"
+      )
+
 -- | Parse an 'Expr' without any operators or application at the outermost
 --   level.
 factor :: Parser Expr
 factor =  parens expr
       <|> var
       <|> numLit
+      <|> boolLit
       <|> lambda
       <|> letin
       <?> "variable, literal, lambda or let"

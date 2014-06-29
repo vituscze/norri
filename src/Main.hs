@@ -20,7 +20,7 @@ import Options
 
 defaultCtx :: TICtx
 defaultCtx =
-  ( Map.fromList [("Int", 0)]
+  ( Map.fromList [("Bool", 0), ("Int", 0)]
   , Map.fromList []
   , Map.fromList []
   )

@@ -64,13 +64,14 @@ reservedImpl =
 -- | List of names reserved for actual language.
 reservedLang :: [String]
 reservedLang =
-    [ "data", "let", "in"
+    [ "data", "let", "in", "True", "False"
     ]
 
 -- | List of reserved names.
 --
---   Some of those are reserved for the actual language (@let@, @in@, @data@),
---   some for implementation (@fix@, for example) and the rest are C++ keywords.
+--   Some of those are reserved for the actual language (@let@, @in@, @data@,
+--   @True@, @False@), some for implementation (@fix@, for example) and the
+--   rest are C++ keywords.
 reservedNames :: [String]
 reservedNames = reservedCpp ++ reservedImpl ++ reservedLang
 
