@@ -1,24 +1,22 @@
 -- | Errors that can happen during the type inference process.
 module Compiler.TypeChecking.Error
     (
-    -- * Unification errors.
+    -- * Unification errors
       UnificationError(..)
 
-    -- * Kind errors.
+    -- * Kind errors
     , KindError(..)
 
-    -- * Scope errors.
+    -- * Scope errors
     , ScopeError(..)
 
-    -- * Type errors.
+    -- * Type errors
     , TypeError(..)
 
-    -- * All errors.
+    -- * All errors
     , TCError(..)
     )
     where
-
-import Control.Monad.Error
 
 import Compiler.AST
 
@@ -55,7 +53,3 @@ data TCError
     | TError TypeError         -- ^ Type errors.
     | UnknownError String      -- ^ Other errors.
     deriving (Eq, Show)
-
-instance Error TCError where
-    noMsg  = UnknownError ""
-    strMsg = UnknownError

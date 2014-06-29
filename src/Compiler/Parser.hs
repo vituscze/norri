@@ -33,11 +33,11 @@ import Compiler.AST
 import Compiler.Lexer
 import Compiler.TypeChecking.Free  -- For type quantification.
 
--- | Parses a variable of any sort (starting with lower or upper case letter).
+-- | Parse a variable of any sort (starting with lower or upper case letter).
 var :: Parser Expr
 var = Var <$> anyIdent
 
--- | Parses a lambda abstraction.
+-- | Parse a lambda abstraction.
 lambda :: Parser Expr
 lambda = flip (foldr Lam)
     <$> (reservedOp "\\"
@@ -45,18 +45,18 @@ lambda = flip (foldr Lam)
     <*> (reservedOp "->"
      *> expr)
 
--- | Parses a let-in expression.
+-- | Parse a let-in expression.
 letin :: Parser Expr
 letin = Let <$> (reserved "let"
              *> defOnly `sepBy1` semi)
             <*> (reserved "in"
              *> expr)
 
--- | Parses an integer literal.
+-- | Parse an integer literal.
 numLit :: Parser Expr
 numLit = NumLit <$> integer
 
--- | Parses an 'Expr' without any operators or application at the outermost
+-- | Parse an 'Expr' without any operators or application at the outermost
 --   level.
 factor :: Parser Expr
 factor =  parens expr
@@ -66,11 +66,11 @@ factor =  parens expr
       <|> letin
       <?> "variable, literal, lambda or let"
 
--- | Parses an 'Expr' without any operator at the outermost level.
+-- | Parse an 'Expr' without any operator at the outermost level.
 manyFactors :: Parser Expr
 manyFactors = foldl1 App <$> many1 factor
 
--- | Parses an 'Expr' given a parser for an operator for forcing
+-- | Parse an 'Expr' given a parser for an operator for forcing
 --   type unification.
 exprOp :: Parser (Expr -> Scheme -> Expr) -> Parser Expr
 exprOp colon = manyFactors >>= ((<|>) <$> lassocP <*> return)
@@ -83,61 +83,61 @@ exprOp colon = manyFactors >>= ((<|>) <$> lassocP <*> return)
 
     lassocP1 = (<|>) <$> lassocP <*> return
 
--- | Parses an 'Expr'.
+-- | Parse an 'Expr'.
 expr :: Parser Expr
 expr = exprOp (reservedOp ":" *> pure SetType)
 
--- | Parses a definition given the identifier of the entity being defined.
+-- | Parse a definition given the identifier of the entity being defined.
 def :: String -> Parser ValueDef
 def s = ValueDef s <$> (reservedOp "=" *> expr)
 
--- | Parses a whole definition.
+-- | Parse a whole definition.
 --
 --   Unlike 'def', this also parses the identifier on its own.
 defOnly :: Parser ValueDef
 defOnly = lowIdent >>= def
 
--- | Parses a type name, which is an 'identifier' starting with an upper
+-- | Parse a type name, which is an 'identifier' starting with an upper
 --   case letter.
 tyName :: Parser Type
 tyName = TyData <$> upIdent
 
--- | Parses a type variable, which as an 'identifier' starting with a lower
+-- | Parse a type variable, which as an 'identifier' starting with a lower
 --   case letter.
 tyVar :: Parser Type
 tyVar = TyVar <$> lowIdent
 
--- | Parser for a 'Type' without any operators or type application at the
---   outermost level.
+-- | Parse a 'Type' without any operators or type application at the outermost
+--   level.
 tyFactor :: Parser Type
 tyFactor =  parens typ
         <|> tyName
         <|> tyVar
         <?> "type variable or name"
 
--- | Parser for a 'Type' without any operators at the outermost level.
+-- | Parse a 'Type' without any operators at the outermost level.
 manyTyFactors :: Parser Type
 manyTyFactors = foldl1 TyApp <$> many1 tyFactor
 
--- | Parser for a 'Type'.
+-- | Parse a 'Type'.
 typ :: Parser Type
 typ = Ex.buildExpressionParser table manyTyFactors
   where
     table = [[Ex.Infix (reservedOp "->" *> pure TyArr) Ex.AssocRight]]
 
--- | Parser for a type 'Scheme'.
+-- | Parse a type 'Scheme'.
 scheme :: Parser Scheme
 scheme = (\t -> quantify (free t) t) <$> typ
 
--- | Parser for a type signature 'TypeSig'.
+-- | Parse a type signature 'TypeSig'.
 typeSig :: String -> Parser TypeSig
 typeSig s = Sig s <$> (reservedOp ":" *> scheme)
 
--- | Parses a vertical bar.
+-- | Parse a vertical bar.
 vbar :: Parser ()
 vbar = reservedOp "|"
 
--- | Parses a type constructor 'TyCon'.
+-- | Parse a type constructor 'TyCon'.
 --
 --   Note that since eliminator's name is just a noncapitalized data type name,
 --   this parser also checks if this name won't conflict with any non language
@@ -146,12 +146,12 @@ tyCon :: Parser TyCon
 tyCon = TyCon <$> up'Ident
               <*> many lowIdent
 
--- | Parses a 'Variant' of a data type definition.
+-- | Parse a 'Variant' of a data type definition.
 variant :: Parser Variant
 variant = DataCon <$> upIdent
                   <*> many (tyVar <|> tyName <|> parens typ)
 
--- | Parses a data type definition.
+-- | Parse a data type definition.
 --
 --   Note that this parser also allows empty data definitions.
 dataDef :: Parser DataDef
@@ -160,7 +160,7 @@ dataDef = DataDef <$> (reserved "data"
                   <*> (reserved "=" *> variant `sepBy1` vbar
                   <|> pure [])
 
--- | Parses a definition or a type signature.
+-- | Parse a definition or a type signature.
 --
 --   This parser exists to factor out the requirement of both
 --   'def' and 'typeSig' to parse identifier first. This way we can avoid
@@ -171,12 +171,12 @@ defOrSig = lowIdent >>= \i ->
     (Value <$> def i) <|> (Type <$> typeSig i)
 
 
--- | Parses a 'TopLevel' entity.
+-- | Parse a 'TopLevel' entity.
 topLevel :: Parser TopLevel
 topLevel = (Data <$> dataDef) <|> defOrSig
 
--- | Parses whole 'Module'.
+-- | Parse whole 'Module'.
 --
---   Consumes everything in the input stream.
+--   It also consumes everything in the input stream.
 file :: Parser Module
 file = Module <$> everything (topLevel `sepBy` semi)

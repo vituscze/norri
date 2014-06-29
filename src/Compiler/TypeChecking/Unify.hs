@@ -2,13 +2,13 @@
 -- | Type unification.
 module Compiler.TypeChecking.Unify
     (
-    -- * Unification.
+    -- * Unification
       unify
     )
     where
 
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 import qualified Data.Set as Set
 import Data.Set (Set)
 
@@ -17,7 +17,7 @@ import Compiler.TypeChecking.Error
 import Compiler.TypeChecking.Free
 import Compiler.TypeChecking.Subst
 
--- | Attempts to unify two types. If this operation is successful, the
+-- | Attempt to unify two types. If this operation is successful, the
 --   resulting substitution is returned (in a monadic context).
 --
 --   If the unification is not successful, an error is thrown in the

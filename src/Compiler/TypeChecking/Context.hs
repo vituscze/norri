@@ -2,17 +2,17 @@
 --   type signature contexts.
 module Compiler.TypeChecking.Context
     (
-    -- * Kinds.
+    -- * Kinds
       Kind
     , KindCtx
 
-    -- * Types.
+    -- * Types
     , TyCtx
 
-    -- * Type signatures.
+    -- * Type signatures
     , SigCtx
 
-    -- * Type inference context.
+    -- * Type inference context
     , TICtx
     )
     where

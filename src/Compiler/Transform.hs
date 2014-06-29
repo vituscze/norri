@@ -1,14 +1,14 @@
 -- | Module for basic AST transformations.
 module Compiler.Transform
     (
-    -- * Free variables.
+    -- * Free variables
       free
 
-    -- * Recursion removal.
+    -- * Recursion removal
     , fixify
     , fixifyModule
 
-    -- * Variables renaming.
+    -- * Variables renaming
     , rename
     , fresh
     , freshModule
@@ -27,7 +27,7 @@ import Data.Set (Set, (\\))
 
 import Compiler.AST
 
--- | Returns set of all free variables in a given expression.
+-- | Return set of all free variables in a given expression.
 --
 --   Local definitions inside @Let@ also bind variables.
 --
@@ -48,9 +48,9 @@ free (Let decls e) = (free e \\ names) `Set.union` vars
       where
         names' = Set.insert n names
 
--- | Modifies a recursive definition into a non-recursive one by
---   adding the fix point operator. If the definition is not recursive,
---   no changes are made.
+-- | Modifiy a recursive definition into a non-recursive one by
+--   adding the fix point operator. If the definition and any possible
+--   local definitions) are not recursive, no changes are made.
 --
 --   A definition @ValueDef n e@ is recursive, if @n@ is a free variable
 --   inside the expression @e@.
@@ -69,7 +69,7 @@ fixify v@(ValueDef n e)
     fixify' (Fix x e)     = Fix x (fixify' e)
     fixify' e             = e
 
--- | Removes direction recursion in whole module by applying 'fixify'
+-- | Remove direct recursion in the whole module by applying 'fixify'
 --   to all 'ValueDef'initions.
 fixifyModule :: Module -> Module
 fixifyModule (Module tls) = Module (map go tls)
@@ -81,7 +81,7 @@ fixifyModule (Module tls) = Module (map go tls)
 --   type @v@ to variables of type @v'@.
 type RenameM a = ReaderT (Map Name Name) (State Int) a
 
--- | Extracts a new name @s'@ from state and runs @m@ with environment mapping
+-- | Extract a new name @s'@ from state and runs @m@ with environment mapping
 --   @s@ to @s'@.
 --
 --   The crated name is @_Ts'@, where @s'@ is the extracted number.
@@ -92,7 +92,7 @@ localInsert s m = do
     a  <- local (Map.insert s name) m
     return (name, a)
 
--- | Renames all bound variables in an expression so that no two distinct
+-- | Rename all bound variables in an expression so that no two distinct
 --   variables share the same name.
 --
 --   The variables are renamed to @_Tn@, where @n@ are number starting with
@@ -117,7 +117,7 @@ rename s e = evalState (runReaderT (go e) Map.empty) s
             (n', (e', Let decls' outer)) <- localInsert n renamed
             return (Let (ValueDef n' e':decls') outer)
 
--- | Replaces all variables with fresh names to prevent any problems
+-- | Replace all variables with fresh names to prevent any problems
 --   in the generated C++ code.
 --
 --   Note that this function should be only called after the removal of
@@ -126,7 +126,7 @@ rename s e = evalState (runReaderT (go e) Map.empty) s
 fresh :: ValueDef -> ValueDef
 fresh (ValueDef n e) = ValueDef n (rename 0 e)
 
--- | Replaces all variables in a module with fresh names.
+-- | Replace all variables in a module with fresh names.
 --
 --   This is done by using 'fresh' on all 'ValueDef'initions. Note that two
 --   different definitions may share same variables, but this is not an

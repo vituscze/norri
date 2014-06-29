@@ -2,16 +2,16 @@
 -- | Implementation of type substitutions.
 module Compiler.TypeChecking.Subst
     (
-    -- * Substitution type.
+    -- * Substitution type
       Subst
 
-    -- * Substitution modifications.
+    -- * Substitution modifications
     , empty
     , add
     , find
     , (@@)
 
-    -- * Substitution application.
+    -- * Substitution application
     , Apply(..)
     )
     where
@@ -30,13 +30,13 @@ type Subst = Map TyVar Type
 empty :: Subst
 empty = Map.empty
 
--- | Adds a new substitution from a given variable to a given type.
+-- | Add a new substitution from a given variable to a given type.
 --
 --   Alias for @insert@ing into a map.
 add :: TyVar -> Type -> Subst -> Subst
 add = Map.insert
 
--- | Attempts to find a variable @v@ in the substitution. If no substitution
+-- | Attempt to find a variable @v@ in the substitution. If no substitution
 --   can be found, returns just the variable @v@.
 find :: TyVar -> Subst -> Type
 find v = maybe (TyVar v) id . Map.lookup v

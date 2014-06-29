@@ -1,10 +1,10 @@
 -- | Command line options.
 module Options
     (
-    -- * Options type.
+    -- * Options type
       Options(..)
 
-    -- * Options parsing.
+    -- * Options parsing
     , options
     )
     where

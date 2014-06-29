@@ -2,10 +2,10 @@
 --   whitespace and comments properly.
 module Compiler.Lexer
     (
-    -- * Reserved names.
+    -- * Reserved names
       reservedNames
 
-    -- * Parsers and parser combinators.
+    -- * Parsers and parser combinators
     , parens
     , anyIdent
     , upIdent
@@ -67,9 +67,8 @@ reservedLang =
 
 -- | List of reserved names.
 --
---   First three names are used in the actual language, next two are reserved
---   for implementation purposes and the rest is to make sure that the compiler
---   produces valid C++ code.
+--   Some of those are reserved for the actual language (@let@, @in@, @data@),
+--   some for implementation (@fix@, for example) and the rest are C++ keywords.
 reservedNames :: [String]
 reservedNames = reservedCpp ++ reservedImpl ++ reservedLang
 
@@ -85,19 +84,19 @@ lexer = Tok.makeTokenParser style
         , Tok.identLetter     = identLetter
         }
 
--- | Parses a value of type @a@ inside parentheses.
+-- | Parse a value of type @a@ inside parentheses.
 parens :: Parser a -> Parser a
 parens = Tok.parens lexer
 
--- | Parses any kind of identifier.
+-- | Parse any kind of identifier.
 anyIdent :: Parser String
 anyIdent = Tok.identifier lexer
 
--- | Parses an identifier which starts with an upper case letter.
+-- | Parse an identifier which starts with an upper case letter.
 upIdent :: Parser String
 upIdent = try (mfilter (isUpper . head) anyIdent) <?> "upper case identifier"
 
--- | Parses an identifier which starts with an upper case letter and is
+-- | Parse an identifier which starts with an upper case letter and is
 --   not a capitalised version of a reserved name (with exception of
 --   "Let", "In" and "Data").
 up'Ident :: Parser String
@@ -108,26 +107,26 @@ up'Ident = try (mfilter check upIdent) <?> msg
     check []     = True
     check (x:xs) = (toLower x:xs) `notElem` (reservedCpp ++ reservedImpl)
 
--- | Parses an identifier which starts with a lower case letter.
+-- | Parse an identifier which starts with a lower case letter.
 lowIdent :: Parser String
 lowIdent = try (mfilter (isLower . head) anyIdent) <?> "lower case identifier"
 
--- | Parses a reserved keyword given by a 'String'.
+-- | Parse a reserved keyword given by a 'String'.
 reserved :: String -> Parser ()
 reserved = Tok.reserved lexer
 
--- | Parses a reserved operator keyword given by a 'String'.
+-- | Parse a reserved operator keyword given by a 'String'.
 reservedOp :: String -> Parser ()
 reservedOp = Tok.reservedOp lexer
 
--- | Parses a semicolon and throws away the result.
+-- | Parse a semicolon and throws away the result.
 semi :: Parser ()
 semi = () <$ Tok.semi lexer
 
--- | Parses an integer literal.
+-- | Parse an integer literal.
 integer :: Parser Integer
 integer = Tok.integer lexer
 
--- | Forces a parser to parse whole input stream.
+-- | Force a parser to parse whole input stream.
 everything :: Parser a -> Parser a
 everything p = Tok.whiteSpace lexer *> p <* eof

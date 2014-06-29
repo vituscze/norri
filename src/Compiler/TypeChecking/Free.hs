@@ -2,10 +2,10 @@
 -- | Free variables and quantification.
 module Compiler.TypeChecking.Free
     (
-    -- * Free type variables.
+    -- * Free type variables
       Free(..)
 
-    -- * Quantification.
+    -- * Quantification
     , quantify
     )
     where

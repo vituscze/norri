@@ -2,25 +2,26 @@
 -- | Type inference monad and type inference operations.
 module Compiler.TypeChecking.Infer
     (
-    -- * Type inference monad.
+    -- * Type inference monad
       TI
+    , Infer
 
-    -- * Operations on type inference monad.
+    -- * Operations on type inference monad
     , runTI
 
-    -- * Fresh variables.
+    -- * Fresh variables
     , newVar
 
-    -- * Fresh instantiations of type schemes.
+    -- * Fresh instantiations of type schemes
     , freshInst
 
-    -- * Unification in TI monad context.
+    -- * Unification in TI monad context
     , unifyE
 
-    -- * Kind checking.
+    -- * Kind checking
     , checkKind
 
-    -- * Type inference.
+    -- * Type inference
     , inferExpr
     , inferValueDef
     , inferVariant
@@ -33,7 +34,7 @@ module Compiler.TypeChecking.Infer
 
 import Control.Applicative ((<$>))
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.State
 import Data.Char
 import qualified Data.Map as Map
@@ -117,7 +118,7 @@ unifyE t u = do
     s <- getSubst
     unify (apply s t) (apply s u) >>= extend
 
--- | Type for all operations doing type inference.
+-- | A type alias for all type inference operations.
 type Infer e t = TICtx -> e -> TI t
 
 -- | Find a type scheme corresponding to a given variable.
@@ -176,7 +177,8 @@ quantifyCtx ctx t = do
 -- | Check whether the inferred type matches the declared type (or that
 --   the inferred type is more generic). If it doesn't, the declared type is
 --   too general and an error is produced.
-setType :: Type -> Infer Scheme ()
+setType :: Type  -- ^ Inferred type.
+        -> Infer Scheme ()
 setType t ctx ts = do
     tf <- freshInst ts
     unifyE tf t
@@ -232,7 +234,9 @@ inferValueDef ctx@(_, _, sc) (ValueDef n e) = do
 --   added to the context, which is then returned.
 --
 --   If a duplicate data constructor is found, an error is produced.
-inferVariant :: Type -> Set TyVar -> Infer Variant TICtx
+inferVariant :: Type       -- ^ Type constructor.
+             -> Set TyVar  -- ^ Bound type variables.
+             -> Infer Variant TICtx
 inferVariant dt bound ctx@(_, tc, _) (DataCon n ts) = do
     let ty = quantify bound (foldr1 TyArr (ts ++ [dt]))
         fr = Set.toList (free ty)
@@ -254,7 +258,10 @@ inferVariant dt bound ctx@(_, tc, _) (DataCon n ts) = do
 --   Note that 'inferElim' automatically picks the name for the eliminator:
 --   it is the uncapitalsed name of the data type. If a value with this name
 --   already exists, an error is produced.
-inferElim :: Type -> Set TyVar -> TyName -> Infer [Variant] TICtx
+inferElim :: Type       -- ^ Type constructor.
+          -> Set TyVar  -- ^ Bound type variables.
+          -> TyName     -- ^ Name of the type constructor.
+          -> Infer [Variant] TICtx
 inferElim dt bound n ctx@(_, tc, _) vars = do
     z <- newVar
     let TyVar z'  = z
@@ -278,7 +285,7 @@ inferElim dt bound n ctx@(_, tc, _) vars = do
 -- | Kind check data type definition and add all constructors and the
 --   eliminator into type inference context.
 --
---   Also make sure that all bound variables are distinct.
+--   Also make sure that all bound type variables are distinct.
 inferDataDef :: Infer DataDef TICtx
 inferDataDef ctx0@(kc, tc, sc) (DataDef (TyCon n tvs) vs) = do
     let tvs' = Set.fromList tvs

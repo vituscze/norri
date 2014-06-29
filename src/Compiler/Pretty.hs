@@ -6,16 +6,16 @@
 --   code would allow for more flexibility and type safety.
 module Compiler.Pretty
     (
-    -- * Module pretty printing.
+    -- * Module pretty printing
       prettyModule
     , prettyTopLevel
 
-    -- * Top level entities pretty printing.
+    -- * Top level entities pretty printing
     , prettyType
     , prettyDataDef
     , prettyValDef
 
-    -- * Expression pretty printing.
+    -- * Expression pretty printing
     , prettyExpr
     )
     where
@@ -33,7 +33,7 @@ lbrace = "\n{\n"
 rbrace :: String
 rbrace = "\n};\n"
 
--- | Pretty prints a @struct@ given its name and contents.
+-- | Pretty print a @struct@ given its name and contents.
 --
 -- >>> putStrLn $ struct "s" "int x;"
 -- struct s
@@ -45,7 +45,7 @@ struct :: String  -- ^ Name of the @struct@.
        -> String
 struct name content = concat ["struct ", name, lbrace, content, rbrace]
 
--- | Pretty prints a @template@ given its name, contents and the (only)
+-- | Pretty print a @template@ given its name, contents and the (only)
 --   template argument.
 --
 -- >>> putStrLn $ template "x" "s" "int y;"
@@ -61,7 +61,7 @@ template :: String  -- ^ Name of the template argument.
 template arg name content
     = "template <typename " ++ arg ++ ">\n" ++ struct name content
 
--- | Pretty prints a @template@ @struct@ forward declaration.
+-- | Pretty print a @template@ @struct@ forward declaration.
 --
 -- >>> putStrLn $ fwdTemplate "s"
 -- template <typename>
@@ -70,7 +70,7 @@ fwdTemplate :: String  -- ^ Name of the @struct@.
             -> String
 fwdTemplate name = "template <typename>\nstruct " ++ name ++ ";\n"
 
--- | Pretty prints a @typedef@ which identifies type expression @what@ with
+-- | Pretty print a @typedef@ which identifies type expression @what@ with
 --   @type@.
 --
 -- >>> putStrLn $ typedef "int"
@@ -79,7 +79,7 @@ typedef :: String  -- ^ Type expression.
         -> String
 typedef what = "typedef " ++ what ++ " " ++ ty ++ ";"
 
--- | Pretty prints a type expression extracting inner @type@ from another
+-- | Pretty print a type expression extracting inner @type@ from another
 --   type.
 --
 -- >>> putStrLn $ innerType "vector"
@@ -88,7 +88,7 @@ innerType :: String  -- ^ Type expression.
           -> String
 innerType what = "typename " ++ what ++ "::" ++ ty
 
--- | Pretty prints a nested hierarchy of @struct@ures used for
+-- | Pretty print a nested hierarchy of @struct@ures used for
 --   lambda abstraction.
 --
 -- >>> putStrLn $ innerApply "x" "s" "int x;"
@@ -109,7 +109,7 @@ innerApply :: String  -- ^ Name of the template argument.
            -> String
 innerApply arg name = struct name . struct ty . template arg apply
 
--- | Pretty prints a list of declarations.
+-- | Pretty print a list of declarations.
 --
 --   This is just a name-flavored 'concat'.
 decls :: [String]  -- ^ List of declarations.
@@ -128,7 +128,7 @@ ty = "type"
 dummy :: String
 dummy = "dummy"
 
--- | Pretty prints whole module.
+-- | Pretty print whole module.
 --
 --   Prints all top level entities contained in module and separates them
 --   by two newlines.
@@ -137,21 +137,21 @@ prettyModule (Module m) = intercalate sep $ map prettyTopLevel m
   where
     sep = "\n\n"
 
--- | Pretty prings a top level declaration.
+-- | Pretty pring a top level declaration.
 prettyTopLevel :: TopLevel -> String
 prettyTopLevel tl = case tl of
     Data  dd -> prettyDataDef dd
     Value vd -> prettyValDef vd
     Type  _  -> ""  -- Types are erased.
 
--- | Pretty prints a type signature.
+-- | Pretty print a type signature.
 --
 --   Since type signatures have no correspondence in the template C++ code,
 --   an empty string is returned.
 prettyType :: TypeSig -> String
 prettyType _ = ""
 
--- | Pretty prints a data definition.
+-- | Pretty print a data definition.
 --
 --   Note that since this language doesn't allow pattern matching, this
 --   function will automatically define an appropriate eliminator for the
@@ -174,7 +174,7 @@ prettyDataDef (DataDef (TyCon tyConName _) variants) = decls
 
     applyAlt       = "apply_alt"
 
-    -- Pretty prints a single data constructor.
+    -- Pretty print a single data constructor.
     defineCtor :: Variant  -- ^ Data constructor.
                -> Int      -- ^ Numeric suffix for @struct@s.
                -> String
@@ -202,7 +202,7 @@ prettyDataDef (DataDef (TyCon tyConName _) variants) = decls
             localA = localArg u
             localS = localStruct u
 
-    -- Pretty prints an eliminator for the whole data type.
+    -- Pretty print an eliminator for the whole data type.
     defineElim :: [Variant] -> String
     defineElim vs = struct (firstToLower tyConName) . decls $
         [ go 0 elimStruct [] vs
@@ -240,7 +240,7 @@ prettyDataDef (DataDef (TyCon tyConName _) variants) = decls
             localA = localArg u
             localS = localStruct u
 
-        -- Pretty prints a @template@ specialization which deconstructs
+        -- Pretty print a @template@ specialization which deconstructs
         -- @n@-th constructor and applies the corresponding elimination
         -- function to all its fields.
         handleCase :: Variant  -- ^ 'Variant' to be pretty printed.
@@ -293,7 +293,7 @@ prettyDataDef (DataDef (TyCon tyConName _) variants) = decls
             extra  = "__extra"
 
 
--- | Pretty prints a value definition.
+-- | Pretty print a value definition.
 prettyValDef :: ValueDef -> String
 prettyValDef (ValueDef name expr) =
     struct name . decls $
@@ -303,7 +303,7 @@ prettyValDef (ValueDef name expr) =
   where
     defStruct = "__def"
 
--- | Pretty prints and expression given a name of @struct@ it should be
+-- | Pretty print and expression given a name of @struct@ it should be
 --   declared in.
 prettyExpr :: String  -- ^ Name of the @struct@.
            -> Expr
