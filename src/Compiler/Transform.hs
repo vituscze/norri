@@ -41,9 +41,9 @@ free (NumLit _)    = Set.empty
 free (Fix x e)     = free e \\ Set.singleton x
 free (Let decls e) = (free e \\ names) `Set.union` vars
   where
-    (names, vars) = foldr freeStep (Set.empty, Set.empty) (reverse decls)
+    (names, vars) = foldr step (Set.empty, Set.empty) (reverse decls)
 
-    freeStep (ValueDef n e') (bound, freev) =
+    step (ValueDef n e') (bound, freev) =
         (bound', freev `Set.union` (free e' \\ bound'))
       where
         bound' = Set.insert n bound
@@ -87,7 +87,7 @@ type RenameM a = ReaderT (Map Name Name) (State Int) a
 --   The crated name is @_Ts'@, where @s'@ is the extracted number.
 localInsert :: Name -> RenameM a -> RenameM (Name, a)
 localInsert s m = do
-    s' <- state (\n -> (n, n + 1))
+    s' <- state $ \n -> (n, n + 1)
     let name = "_T" ++ show s'
     a  <- local (Map.insert s name) m
     return (name, a)
@@ -107,7 +107,7 @@ rename s ex = evalState (runReaderT (go ex) Map.empty) s
     go (Lam x e)     = uncurry Lam <$> localInsert x (go e)
     go (App e1 e2)   = App <$> go e1 <*> go e2
     go (SetType e t) = flip SetType t <$> go e
-    go (NumLit n)    = return (NumLit n)
+    go (NumLit n)    = return $ NumLit n
     go (Fix x e)     = uncurry Fix <$> localInsert x (go e)
     go (Let decls e) = go' decls
       where
@@ -115,7 +115,7 @@ rename s ex = evalState (runReaderT (go ex) Map.empty) s
         go' (ValueDef n e':ds) = do
             let renamed = (,) <$> go e' <*> go' ds
             (n', (e'', Let decls' outer)) <- localInsert n renamed
-            return (Let (ValueDef n' e'':decls') outer)
+            return $ Let (ValueDef n' e'':decls') outer
 
 -- | Replace all variables with fresh names to prevent any problems
 --   in the generated C++ code.

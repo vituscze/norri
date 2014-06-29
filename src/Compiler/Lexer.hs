@@ -102,7 +102,7 @@ upIdent = try (mfilter (isUpper . head) anyIdent) <?> "upper case identifier"
 up'Ident :: Parser String
 up'Ident = try (mfilter check upIdent) <?> msg
   where
-    msg = "identifier not conflicting with a keyword"
+    msg = "upper case identifier not conflicting with a keyword"
 
     check []     = True
     check (x:xs) = (toLower x:xs) `notElem` (reservedCpp ++ reservedImpl)

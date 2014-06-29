@@ -32,7 +32,7 @@ module Compiler.TypeChecking.Infer
     )
     where
 
-import Control.Applicative ((<$>))
+import Control.Applicative
 import Control.Monad
 import Control.Monad.Except
 import Control.Monad.State
@@ -59,7 +59,7 @@ type TI a = StateT Subst (StateT Int (Either TCError)) a
 -- | Run a type inference with empty substitution and starting counter
 --   for name generation.
 runTI :: TI a -> Either TCError a
-runTI m = fst . fst <$> runStateT (runStateT m empty) 0
+runTI m = fst . fst <$> runStateT (runStateT m emptyS) 0
 
 -- | Get the current substitution.
 getSubst :: TI Subst
@@ -103,7 +103,7 @@ freshInst :: Scheme -> TI Type
 freshInst (Scheme i t) = do
     new <- replicateM i newVar
     let m = Map.fromList $ zip [0 ..] new
-    return (inst m t)
+    return $ inst m t
 
 -- | Extend a global substitution with given one.
 extend :: Subst -> TI ()
@@ -159,7 +159,7 @@ checkKind (kc, _, _) (Scheme _ ts) = do
         when (ti < 1) . throwError . KError $ KindMismatch
         ui <- go u
         when (ui /= 0) . throwError . KError $ KindMismatch
-        return (ti - 1)
+        return $ ti - 1
     go (TyArr t u) = do
         ti <- go t
         ui <- go u
@@ -170,9 +170,9 @@ checkKind (kc, _, _) (Scheme _ ts) = do
 quantifyCtx :: Infer Type Scheme
 quantifyCtx ctx t = do
     s <- getSubst
-    let t'   = apply s t
-        qvar = free t' \\ free (apply s ctx)
-    return (quantify qvar t')
+    let t' = apply s t
+        q  = free t' \\ free (apply s ctx)
+    return $ quantify q t'
 
 -- | Check whether the inferred type matches the declared type (or that
 --   the inferred type is more generic). If it doesn't, the declared type is
@@ -187,18 +187,20 @@ setType t ctx ts = do
 
 -- | Infer the type of a given expression.
 inferExpr :: Infer Expr Type
-inferExpr ctx (Var v)   = findCtx ctx v >>= freshInst
+inferExpr ctx (Var v)   =
+    findCtx ctx v >>= freshInst
 inferExpr ctx (Lam x e) = do
     t  <- newVar
     te <- inferExpr (addCtx x (Scheme 0 t) ctx) e
-    return (TyArr t te)
+    return $ TyArr t te
 inferExpr ctx (App e1 e2) = do
     te1 <- inferExpr ctx e1
     te2 <- inferExpr ctx e2
     t   <- newVar
     unifyE (TyArr te2 t) te1
     return t
-inferExpr ctx (Let [] e) = inferExpr ctx e
+inferExpr ctx (Let [] e) =
+    inferExpr ctx e
 inferExpr ctx (Let (d:ds) e) = do
     ctx' <- inferValueDef ctx d
     inferExpr ctx' (Let ds e)
@@ -207,7 +209,8 @@ inferExpr ctx (SetType e ts) = do
     te <- inferExpr ctx e
     setType te ctx ts
     return te
-inferExpr _   (NumLit _) = return (TyData "Int")
+inferExpr _   (NumLit _) =
+    return $ TyData "Int"
 inferExpr ctx (Fix x e) = do
     t  <- newVar
     te <- inferExpr (addCtx x (Scheme 0 t) ctx) e
@@ -222,7 +225,7 @@ inferValueDef :: Infer ValueDef TICtx
 inferValueDef ctx@(_, _, sc) (ValueDef n e) = do
     te  <- inferExpr ctx e
     tes <- case Map.lookup n sc of
-        Just ts -> setType te ctx ts >> return ts
+        Just ts -> ts <$ setType te ctx ts
         Nothing -> quantifyCtx ctx te
     return $ addCtx n tes ctx
 
@@ -246,7 +249,7 @@ inferVariant dt bound ctx@(_, tc, _) (DataCon n ts) = do
         []  -> return ()
         u:_ -> throwError . SError $ UndefinedType u
     when (n `Map.member` tc) . throwError . SError $ ValueRedefined n
-    return (addCtx n ty ctx)
+    return $ addCtx n ty ctx
 
 -- | Infer the type of an eliminator for a data type given the type constructor,
 --   list of variables bound in the type constructor, name of the type
@@ -264,12 +267,15 @@ inferElim :: Type       -- ^ Type constructor.
           -> Infer [Variant] TICtx
 inferElim dt bound n ctx@(_, tc, _) vars = do
     z <- newVar
-    let TyVar z'  = z
+    let TyVar z' = z
+
+        -- Type construction.
         tyV (DataCon _ ts) = foldr1 TyArr (ts ++ [z])
-        tyVs vs   = foldr1 TyArr (map tyV vs ++ [dt, z])
-        bound'    = Set.insert z' bound
-        ty        = quantify bound' (tyVs vars)
-        fr        = Set.toList (free ty)
+        tyVs vs            = foldr1 TyArr (map tyV vs ++ [dt, z])
+
+        bound' = Set.insert z' bound
+        ty     = quantify bound' (tyVs vars)
+        fr     = Set.toList (free ty)
     -- The type of the eliminator should be self-contained, it should not
     -- contain any free type variables.
     case fr of
@@ -281,9 +287,9 @@ inferElim dt bound n ctx@(_, tc, _) vars = do
     let fToL []     = []
         fToL (x:xs) = toLower x:xs
 
-        n'          = fToL n
-    when (n' `Map.member` tc) . throwError . SError $ ValueRedefined n
-    return (addCtx n' ty ctx)
+        n' = fToL n
+    when (n' `Map.member` tc) . throwError . SError $ ValueRedefined n'
+    return $ addCtx n' ty ctx
 
 -- | Kind check data type definition and add all constructors and the
 --   eliminator into type inference context.
