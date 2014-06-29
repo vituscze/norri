@@ -7,10 +7,8 @@ module Compiler.TypeChecking.Unify
     )
     where
 
-import Control.Monad
 import Control.Monad.Except
 import qualified Data.Set as Set
-import Data.Set (Set)
 
 import Compiler.AST
 import Compiler.TypeChecking.Error

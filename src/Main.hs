@@ -6,11 +6,9 @@ module Main
     where
 
 import qualified Data.Map as Map
-import Data.Map (Map)
 import Data.Maybe
 import Options.Applicative
 import System.Exit
-import System.IO
 import Text.Parsec
 
 import Compiler.Parser
@@ -37,8 +35,8 @@ main = do
     let input  = inputFile opts
         output = fromMaybe defaultOutput (outputFile opts)
 
-    input <- readFile input
-    ast <- case parse file "" input of
+    code <- readFile input
+    ast  <- case parse file "" code of
         Right ast -> return ast
         Left  err -> putStrLn "Parsing error:" >> print err >> exitFailure
     let ast' = fixifyModule ast

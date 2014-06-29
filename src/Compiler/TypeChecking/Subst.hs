@@ -18,7 +18,6 @@ module Compiler.TypeChecking.Subst
 
 import qualified Data.Map as Map
 import Data.Map (Map)
-import Data.Maybe
 
 import Compiler.AST
 import Compiler.TypeChecking.Context
@@ -54,9 +53,9 @@ class Apply t where
 -- | Substitution can be applied to 'Type's simply by looking up the
 --   corresponding type for each 'TyVar'.
 instance Apply Type where
-    apply s (TyData n)   = TyData n
+    apply _ (TyData n)   = TyData n
     apply s (TyVar v)    = find v s
-    apply s (TyGen i)    = TyGen i
+    apply _ (TyGen i)    = TyGen i
     apply s (TyApp t u)  = TyApp (apply s t) (apply s u)
     apply s (TyArr t u)  = TyArr (apply s t) (apply s u)
 

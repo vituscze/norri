@@ -17,7 +17,6 @@ module Compiler.TypeChecking.Context
     )
     where
 
-import qualified Data.Map as Map
 import Data.Map (Map)
 
 import Compiler.AST

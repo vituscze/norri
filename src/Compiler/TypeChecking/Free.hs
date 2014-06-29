@@ -11,7 +11,6 @@ module Compiler.TypeChecking.Free
     where
 
 import qualified Data.Map as Map
-import Data.Map (Map)
 import qualified Data.Set as Set
 import Data.Set (Set)
 
@@ -25,9 +24,9 @@ class Free t where
 
 -- | Free variables of a type are just the set of all variables.
 instance Free Type where
-    free (TyData d)  = Set.empty
+    free (TyData _)  = Set.empty
     free (TyVar v)   = Set.singleton v
-    free (TyGen i)   = Set.empty
+    free (TyGen _)   = Set.empty
     free (TyApp t u) = free t `Set.union` free u
     free (TyArr t u) = free t `Set.union` free u
 

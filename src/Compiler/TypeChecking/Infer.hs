@@ -140,8 +140,8 @@ addCtx n s (kc, tc, sc) = (kc, Map.insert n s tc, sc)
 --   defined yet) or the scheme contains a kind error (such as @Int a@), an
 --   error is produced.
 checkKind :: Infer Scheme ()
-checkKind (kc, _, _) (Scheme _ t) = do
-    i <- go t
+checkKind (kc, _, _) (Scheme _ ts) = do
+    i <- go ts
     when (i /= 0) . throwError . KError $ KindMismatch
   where
     go (TyData n) = case Map.lookup n kc of
@@ -207,7 +207,7 @@ inferExpr ctx (SetType e ts) = do
     te <- inferExpr ctx e
     setType te ctx ts
     return te
-inferExpr ctx (NumLit _) = return (TyData "Int")
+inferExpr _   (NumLit _) = return (TyData "Int")
 inferExpr ctx (Fix x e) = do
     t  <- newVar
     te <- inferExpr (addCtx x (Scheme 0 t) ctx) e
@@ -266,7 +266,7 @@ inferElim dt bound n ctx@(_, tc, _) vars = do
     z <- newVar
     let TyVar z'  = z
         tyV (DataCon _ ts) = foldr1 TyArr (ts ++ [z])
-        tyVs vars = foldr1 TyArr (map tyV vars ++ [dt, z])
+        tyVs vs   = foldr1 TyArr (map tyV vs ++ [dt, z])
         bound'    = Set.insert z' bound
         ty        = quantify bound' (tyVs vars)
         fr        = Set.toList (free ty)
@@ -277,7 +277,10 @@ inferElim dt bound n ctx@(_, tc, _) vars = do
         u:_ -> throwError . SError $ UndefinedType u
 
     -- Name of the eliminator.
-    let fToL (x:xs) = toLower x:xs
+    -- TODO: Move this to some module for helper functions.
+    let fToL []     = []
+        fToL (x:xs) = toLower x:xs
+
         n'          = fToL n
     when (n' `Map.member` tc) . throwError . SError $ ValueRedefined n
     return (addCtx n' ty ctx)
@@ -287,7 +290,7 @@ inferElim dt bound n ctx@(_, tc, _) vars = do
 --
 --   Also make sure that all bound type variables are distinct.
 inferDataDef :: Infer DataDef TICtx
-inferDataDef ctx0@(kc, tc, sc) (DataDef (TyCon n tvs) vs) = do
+inferDataDef (kc, tc, sc) (DataDef (TyCon n tvs) vs) = do
     let tvs' = Set.fromList tvs
         tvsc = Set.size tvs'
     -- Declared type variables should be distinct.

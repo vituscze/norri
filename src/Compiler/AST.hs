@@ -28,10 +28,8 @@ module Compiler.AST
     where
 
 import qualified Data.Map as Map
-import Data.Map (Map)
 import Data.Maybe
 import qualified Data.Set as Set
-import Data.Set (Set)
 
 -- | Type alias for names of variables.
 type Name = String

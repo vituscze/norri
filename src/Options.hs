@@ -12,7 +12,6 @@ module Options
 import Control.Applicative
 import Data.Monoid
 import Options.Applicative
-import System.IO
 
 -- | Data type for command options.
 data Options
