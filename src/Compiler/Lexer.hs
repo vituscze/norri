@@ -58,7 +58,7 @@ reservedCpp =
 -- | List of names reserved for implementation.
 reservedImpl :: [String]
 reservedImpl =
-    [ "fix", "dummy"
+    [ "fix"
     ]
 
 -- | List of names reserved for actual language.

@@ -120,7 +120,7 @@ ty = "type"
 
 -- | 'String' constant for the @dummy@ type.
 dummy :: String
-dummy = "dummy"
+dummy = "__dummy"
 
 -- | Compile whole module.
 --

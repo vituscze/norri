@@ -1,8 +1,8 @@
-template <int i, typename dummy, typename...>
+template <int i, typename __dummy, typename...>
 struct __data
 { };
 
-struct dummy
+struct __dummy
 { };
 
 template <int i>
@@ -88,23 +88,23 @@ struct if_
                         template <typename C>
                         struct apply
                         {
-                            template <bool b, typename dummy>
+                            template <bool b, typename __dummy>
                             struct __check;
 
-                            template <typename dummy>
-                            struct __check<true, dummy>
+                            template <typename __dummy>
+                            struct __check<true, __dummy>
                             {
                                 typedef typename B::type type;
                             };
 
-                            template <typename dummy>
-                            struct __check<false, dummy>
+                            template <typename __dummy>
+                            struct __check<false, __dummy>
                             {
                                 typedef typename C::type type;
                             };
 
                             typedef typename
-                                __check<A::type::value, dummy>::type type;
+                                __check<A::type::value, __dummy>::type type;
                         };
                     };
                 };
