@@ -69,4 +69,3 @@ instance Apply Scheme where
 --   the substitution to each 'Type' contained in the map.
 instance Apply TyCtx where
     apply = Map.map . apply
-
