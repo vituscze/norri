@@ -17,9 +17,6 @@ module Compiler.TypeChecking.Context
 
     -- * Type inference context
     , TICtx(..)
-    , modifyK
-    , modifyT
-    , modifyS
     )
     where
 
@@ -57,15 +54,3 @@ data TICtx
     , sigCtx  :: SigCtx
     }
     deriving (Eq, Show)
-
--- | Apply a function @f@ only to the kind context.
-modifyK :: (KindCtx -> KindCtx) -> TICtx -> TICtx
-modifyK f ctx = ctx { kindCtx = f (kindCtx ctx) }
-
--- | Apply a function @f@ only to the typing context.
-modifyT :: (TyCtx -> TyCtx) -> TICtx -> TICtx
-modifyT f ctx = ctx { typeCtx = f (typeCtx ctx) }
-
--- | Apply a function @f@ only to the type signature context.
-modifyS :: (SigCtx -> SigCtx) -> TICtx -> TICtx
-modifyS f ctx = ctx { sigCtx = f (sigCtx ctx) }

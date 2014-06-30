@@ -70,7 +70,3 @@ instance Apply Scheme where
 instance Apply TyCtx where
     apply = Map.map . apply
 
--- | Substitution can be applied to type inference context ('TICtx') by
---   applying the substitution only to the typing context ('TyCtx').
-instance Apply TICtx where
-    apply s = modifyT (apply s)

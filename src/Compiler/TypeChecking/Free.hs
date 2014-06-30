@@ -40,11 +40,6 @@ instance Free Scheme where
 instance Free TyCtx where
     free = Map.foldr (Set.union . free) Set.empty
 
--- | Free variables of a type inference context are just the free variables
---   of its typing context.
-instance Free TICtx where
-    free = free . typeCtx
-
 -- | Quantify given variables in a type.
 --
 --   These type variables are replaced with 'TyGen' constructors in the
