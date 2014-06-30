@@ -14,7 +14,7 @@ module Compiler.Lexer
     , reserved
     , reservedOp
     , semi
-    , integer
+    , natural
     , everything
     )
     where
@@ -67,6 +67,19 @@ reservedLang =
     [ "data", "let", "in", "True", "False"
     ]
 
+-- | List of operators.
+ops :: [String]
+ops =
+    [ "->", "\\", ":", "|"
+    , "~", "!"
+    , "*", "/", "%"
+    , "+", "-"
+    , "<", "<=", ">", ">=", "==", "/="
+    , "&&"
+    , "^"
+    , "||"
+    ]
+
 -- | List of reserved names.
 --
 --   Some of those are reserved for the actual language (@let@, @in@, @data@,
@@ -78,7 +91,7 @@ reservedNames = reservedCpp ++ reservedImpl ++ reservedLang
 lexer :: Tok.TokenParser st
 lexer = Tok.makeTokenParser style
   where
-    reservedOps   = ["->", "\\", ":", "|"]
+    reservedOps   = ops
     identLetter   = char '_' <|> alphaNum
 
     style = haskellStyle
@@ -126,8 +139,8 @@ semi :: Parser ()
 semi = () <$ Tok.semi lexer
 
 -- | Parse an integer literal.
-integer :: Parser Integer
-integer = Tok.integer lexer
+natural :: Parser Integer
+natural = Tok.natural lexer
 
 -- | Force a parser to parse whole input stream.
 everything :: Parser a -> Parser a

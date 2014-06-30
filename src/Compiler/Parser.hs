@@ -54,7 +54,7 @@ letin = Let <$> (reserved "let"
 
 -- | Parse an integer literal.
 numLit :: Parser Expr
-numLit = NumLit <$> integer
+numLit = NumLit <$> natural
 
 -- | Parse a boolean literal.
 boolLit :: Parser Expr
@@ -78,26 +78,66 @@ factor =  parens expr
 manyFactors :: Parser Expr
 manyFactors = foldl1 App <$> many1 factor
 
--- | Parse an 'Expr' given a parser for an operator for forcing
---   type unification.
-exprOp :: Parser (Expr -> Scheme -> Expr) -> Parser Expr
-exprOp colon = manyFactors >>= ((<|>) <$> lassocP <*> return)
+-- | Parse an 'Expr'.
+expr :: Parser Expr
+expr = exprOp >>= ((<|>) <$> lassocP <*> return)
   where
     -- Implementation inspired by 'buildExpressionParser' from parsec.
     lassocP x = do
-        f <- colon
+        reservedOp ":"
         t <- scheme
-        lassocP1 (f x t)
+        lassocP1 (SetType x t)
 
     lassocP1 = (<|>) <$> lassocP <*> return
 
--- | Parse an 'Expr'.
-expr :: Parser Expr
-expr = exprOp (reservedOp ":" *> pure SetType)
+-- | Parse an 'Expr' without type unification construct (@SetType@).
+exprOp :: Parser Expr
+exprOp = Ex.buildExpressionParser
+    [ [ prefix "~" "neg"
+      , prefix "!" "not_"
+      ]
+
+    , [ binary "*" "mul" Ex.AssocLeft
+      , binary "/" "div" Ex.AssocLeft
+      , binary "%" "rem" Ex.AssocLeft
+      ]
+
+    , [ binary "+" "plus"  Ex.AssocLeft
+      , binary "-" "minus" Ex.AssocLeft
+      ]
+
+    , [ binary "<"  "lt"  Ex.AssocNone
+      , binary "<=" "le"  Ex.AssocNone
+      , binary ">"  "gt"  Ex.AssocNone
+      , binary ">=" "ge"  Ex.AssocNone
+      , binary "==" "eq"  Ex.AssocNone
+      , binary "/=" "neq" Ex.AssocNone
+      ]
+
+    , [ binary "&&" "and_" Ex.AssocRight
+      ]
+
+    , [ binary "^"  "xor_" Ex.AssocRight
+      ]
+
+    , [ binary "||" "or_"  Ex.AssocRight
+      ]
+    ]
+    manyFactors
+  where
+    prefix op name = Ex.Prefix (do
+        reservedOp op
+        return $ App (Var name))
+
+    binary op name assoc = Ex.Infix (do
+        reservedOp op
+        return $ App . App (Var name)) assoc
 
 -- | Parse a definition given the identifier of the entity being defined.
 def :: String -> Parser ValueDef
-def s = ValueDef s <$> (reservedOp "=" *> expr)
+def s = (ValueDef s .) . flip (foldr Lam)
+     <$> many lowIdent
+     <*> (reservedOp "=" *> expr)
 
 -- | Parse a whole definition.
 --
