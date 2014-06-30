@@ -73,4 +73,4 @@ instance Apply TyCtx where
 -- | Substitution can be applied to type inference context ('TICtx') by
 --   applying the substitution only to the typing context ('TyCtx').
 instance Apply TICtx where
-    apply s (kc, tc, sc) = (kc, apply s tc, sc)
+    apply s = modifyT (apply s)

@@ -19,9 +19,9 @@ import Compiler.TypeChecking.Infer
 import Options
 
 defaultCtx :: TICtx
-defaultCtx =
-    ( Map.fromList [("Bool", 0), ("Int", 0)]
-    , Map.fromList
+defaultCtx = TICtx
+    (Map.fromList [("Bool", 0), ("Int", 0)])
+    (Map.fromList
         [ ("neg",   ty "Int -> Int")
         , ("plus",  ty "Int -> Int -> Int")
         , ("minus", ty "Int -> Int -> Int")
@@ -39,9 +39,8 @@ defaultCtx =
         , ("or_",   ty "Bool -> Bool -> Bool")
         , ("xor_",  ty "Bool -> Bool -> Bool")
         , ("if_",   ty "Bool -> a -> a -> a")
-        ]
-    , Map.fromList []
-    )
+        ])
+    (Map.fromList [])
   where
     ty t = case parse scheme "" t of
         Right ts -> ts

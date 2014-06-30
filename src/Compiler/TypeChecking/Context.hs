@@ -16,7 +16,10 @@ module Compiler.TypeChecking.Context
     , ErrCtx
 
     -- * Type inference context
-    , TICtx
+    , TICtx(..)
+    , modifyK
+    , modifyT
+    , modifyS
     )
     where
 
@@ -47,6 +50,22 @@ type SigCtx = Map Name Scheme
 type ErrCtx = Location
 
 -- | All contexts needed for type inference.
+data TICtx
+    = TICtx
+    { kindCtx :: KindCtx
+    , typeCtx :: TyCtx
+    , sigCtx  :: SigCtx
+    }
+    deriving (Eq, Show)
 
--- TODO: separate data type
-type TICtx = (KindCtx, TyCtx, SigCtx)
+-- | Apply a function @f@ only to the kind context.
+modifyK :: (KindCtx -> KindCtx) -> TICtx -> TICtx
+modifyK f ctx = ctx { kindCtx = f (kindCtx ctx) }
+
+-- | Apply a function @f@ only to the typing context.
+modifyT :: (TyCtx -> TyCtx) -> TICtx -> TICtx
+modifyT f ctx = ctx { typeCtx = f (typeCtx ctx) }
+
+-- | Apply a function @f@ only to the type signature context.
+modifyS :: (SigCtx -> SigCtx) -> TICtx -> TICtx
+modifyS f ctx = ctx { sigCtx = f (sigCtx ctx) }

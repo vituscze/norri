@@ -43,7 +43,7 @@ instance Free TyCtx where
 -- | Free variables of a type inference context are just the free variables
 --   of its typing context.
 instance Free TICtx where
-    free (_, tc, _) = free tc
+    free = free . typeCtx
 
 -- | Quantify given variables in a type.
 --
