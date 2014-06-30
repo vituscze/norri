@@ -11,8 +11,8 @@ import Options.Applicative
 import System.Exit
 import Text.Parsec
 
+import Compiler.Compile
 import Compiler.Parser
-import Compiler.Pretty
 import Compiler.Transform
 import Compiler.TypeChecking.Context
 import Compiler.TypeChecking.Infer
@@ -65,4 +65,4 @@ main = do
     case runTI (inferModule ast') [] defaultCtx of
         Right _   -> return ()
         Left  err -> putStrLn "Type checking error:" >> print err >> exitFailure
-    writeFile output (prettyModule (freshModule ast'))
+    writeFile output (compileModule (freshModule ast'))
