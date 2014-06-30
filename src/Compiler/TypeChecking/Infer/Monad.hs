@@ -71,31 +71,39 @@ getCount = lift get
 putCount :: Int -> TI ()
 putCount = lift . put
 
+-- | Get the current error location context.
 askEc :: TI ErrCtx
 askEc = do
     (ec, _) <- ask
     return ec
 
+-- | Get the current type inference context.
 askCtx :: TI TICtx
 askCtx = do
     (_, ctx) <- ask
     return ctx
 
+-- | Get the current kind context.
 askKc :: TI KindCtx
 askKc = do
     TICtx kc _ _ <- askCtx
     return kc
 
+-- | Get the current typing context.
 askTc :: TI TyCtx
 askTc = do
     TICtx _ tc _ <- askCtx
     return tc
 
+-- | Get the current type signature context.
 askSc :: TI SigCtx
 askSc = do
     TICtx _ _ sc <- askCtx
     return sc
 
+-- | Throw an 'ErrorKind' as 'TCError'.
+--
+--   Error location is automatically filled in.
 throwTCError :: ErrorKind -> TI a
 throwTCError e = do
     ec <- askEc
