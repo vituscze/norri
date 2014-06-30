@@ -25,7 +25,7 @@ struct Bool
             template <typename A>\
             struct apply\
             {\
-                  typedef result type;\
+                typedef result type;\
             };\
         };\
     };

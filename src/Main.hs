@@ -63,7 +63,7 @@ main = do
         Right ast -> return ast
         Left  err -> putStrLn "Parsing error:" >> print err >> exitFailure
     let ast' = fixifyModule ast
-    case runTI (inferModule defaultCtx ast') of
+    case runTI (inferModule [] defaultCtx ast') of
         Right _   -> return ()
         Left  err -> putStrLn "Type checking error:" >> print err >> exitFailure
     writeFile output (prettyModule (freshModule ast'))

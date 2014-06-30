@@ -12,6 +12,9 @@ module Compiler.TypeChecking.Context
     -- * Type signatures
     , SigCtx
 
+    -- * Error context
+    , ErrCtx
+
     -- * Type inference context
     , TICtx
     )
@@ -20,6 +23,7 @@ module Compiler.TypeChecking.Context
 import Data.Map (Map)
 
 import Compiler.AST
+import Compiler.TypeChecking.Error
 
 -- | The type for kinds.
 --
@@ -39,5 +43,10 @@ type TyCtx = Map Name Scheme
 -- | Declared type signatures.
 type SigCtx = Map Name Scheme
 
+-- | Error location.
+type ErrCtx = Location
+
 -- | All contexts needed for type inference.
+
+-- TODO: separate data type
 type TICtx = (KindCtx, TyCtx, SigCtx)

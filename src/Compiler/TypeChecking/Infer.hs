@@ -113,22 +113,25 @@ extend ns = do
 
 -- | Try to unify two types and add the resulting substitution to the
 --   global one.
-unifyE :: Type -> Type -> TI ()
-unifyE t u = do
-    s <- getSubst
-    unify (apply s t) (apply s u) >>= extend
+unifyE :: ErrCtx -> Type -> Type -> TI ()
+unifyE ec t u = do
+    s  <- getSubst
+    s' <- case unify (apply s t) (apply s u) of
+        Right s' -> return s'
+        Left  e  -> throwError $ TCError (UError (FullError t u e)) ec
+    extend s'
 
 -- | A type alias for all type inference operations.
-type Infer e t = TICtx -> e -> TI t
+type Infer e t = ErrCtx -> TICtx -> e -> TI t
 
 -- | Find a type scheme corresponding to a given variable.
 --
 --   If the name is not present in the context, the variable is unbound
 --   and error of appropriate type is produced.
-findCtx :: (MonadError TCError m) => TICtx -> Name -> m Scheme
-findCtx (_, tc, _) n = case Map.lookup n tc of
+findCtx :: Infer Name Scheme
+findCtx ec (_, tc, _) n = case Map.lookup n tc of
     Just t -> return t
-    _      -> throwError . SError $ UnboundVariable n
+    _      -> throwError $ TCError (SError (UnboundVariable n)) ec
 
 -- | Add a variable with a given type scheme into the context.
 addCtx :: Name -> Scheme -> TICtx -> TICtx
@@ -140,13 +143,13 @@ addCtx n s (kc, tc, sc) = (kc, Map.insert n s tc, sc)
 --   defined yet) or the scheme contains a kind error (such as @Int a@), an
 --   error is produced.
 checkKind :: Infer Scheme ()
-checkKind (kc, _, _) (Scheme _ ts) = do
+checkKind ec (kc, _, _) (Scheme _ ts) = do
     i <- go ts
-    when (i /= 0) . throwError . KError $ KindMismatch
+    when (i /= 0) . throwError $ TCError (KError (KindMismatch ts i 0)) ec
   where
     go (TyData n) = case Map.lookup n kc of
         Just i -> return i
-        _      -> throwError . SError $ UndefinedType n
+        _      -> throwError $ TCError (SError (UndefinedType n)) ec
 
     -- All variables (quantified or not) are assumed to be of kind @*@.
     go (TyGen _)  = return 0
@@ -156,19 +159,20 @@ checkKind (kc, _, _) (Scheme _ ts) = do
     -- @*@.
     go (TyApp t u) = do
         ti <- go t
-        when (ti < 1) . throwError . KError $ KindMismatch
+        when (ti <  1) . throwError $ TCError (KError (KindMismatch t ti 1)) ec
         ui <- go u
-        when (ui /= 0) . throwError . KError $ KindMismatch
+        when (ui /= 0) . throwError $ TCError (KError (KindMismatch u ui 0)) ec
         return $ ti - 1
     go (TyArr t u) = do
         ti <- go t
         ui <- go u
-        when (ti /= 0 || ui /= 0) . throwError . KError $ KindMismatch
+        when (ti /= 0) . throwError $ TCError (KError (KindMismatch t ti 0)) ec
+        when (ui /= 0) . throwError $ TCError (KError (KindMismatch u ui 0)) ec
         return 0
 
 -- | Quantifiy all variables that are not free in the given typing context.
 quantifyCtx :: Infer Type Scheme
-quantifyCtx ctx t = do
+quantifyCtx _ ctx t = do
     s <- getSubst
     let t' = apply s t
         q  = free t' \\ free (apply s ctx)
@@ -179,44 +183,44 @@ quantifyCtx ctx t = do
 --   too general and an error is produced.
 setType :: Type  -- ^ Inferred type.
         -> Infer Scheme ()
-setType t ctx ts = do
+setType t ec ctx ts = do
     tf <- freshInst ts
-    unifyE tf t
-    nts <- quantifyCtx ctx tf
-    when (nts /= ts) . throwError . TError $ TypeTooGeneral
+    unifyE ec tf t
+    nts <- quantifyCtx ec ctx tf
+    when (nts /= ts) . throwError $ TCError (TError (TypeTooGeneral nts ts)) ec
 
 -- | Infer the type of a given expression.
 inferExpr :: Infer Expr Type
-inferExpr ctx (Var v)   =
-    findCtx ctx v >>= freshInst
-inferExpr ctx (Lam x e) = do
+inferExpr ec ctx (Var v)   =
+    findCtx ec ctx v >>= freshInst
+inferExpr ec ctx (Lam x e) = do
     t  <- newVar
-    te <- inferExpr (addCtx x (Scheme 0 t) ctx) e
+    te <- inferExpr ec (addCtx x (Scheme 0 t) ctx) e
     return $ TyArr t te
-inferExpr ctx (App e1 e2) = do
-    te1 <- inferExpr ctx e1
-    te2 <- inferExpr ctx e2
+inferExpr ec ctx e@(App e1 e2) = do
+    te1 <- inferExpr ec ctx e1
+    te2 <- inferExpr ec ctx e2
     t   <- newVar
-    unifyE (TyArr te2 t) te1
+    unifyE (InExpr e:ec) (TyArr te2 t) te1
     return t
-inferExpr ctx (Let [] e) =
-    inferExpr ctx e
-inferExpr ctx (Let (d:ds) e) = do
-    ctx' <- inferValueDef ctx d
-    inferExpr ctx' (Let ds e)
-inferExpr ctx (SetType e ts) = do
-    checkKind ctx ts
-    te <- inferExpr ctx e
-    setType te ctx ts
+inferExpr ec ctx (Let [] e) =
+    inferExpr ec ctx e
+inferExpr ec ctx (Let (d:ds) e) = do
+    ctx' <- inferValueDef (InLocalDef d:ec) ctx d
+    inferExpr ec ctx' (Let ds e)
+inferExpr ec ctx ex@(SetType e ts@(Scheme _ t)) = do
+    checkKind (InType t:ec) ctx ts
+    te <- inferExpr ec ctx e
+    setType te (InExpr ex:ec) ctx ts
     return te
-inferExpr _   (NumLit _) =
+inferExpr _  _   (NumLit _) =
     return $ TyData "Int"
-inferExpr _   (BoolLit _) =
+inferExpr _  _   (BoolLit _) =
     return $ TyData "Bool"
-inferExpr ctx (Fix x e) = do
+inferExpr ec ctx ex@(Fix x e) = do
     t  <- newVar
-    te <- inferExpr (addCtx x (Scheme 0 t) ctx) e
-    unifyE t te
+    te <- inferExpr ec (addCtx x (Scheme 0 t) ctx) e
+    unifyE (InExpr ex:ec) t te
     return t
 
 -- | Infer the type of a given value definition.
@@ -224,11 +228,11 @@ inferExpr ctx (Fix x e) = do
 --   If the inference succeeds, corresponding pair of value and its type
 --   scheme is added to the context which is then returned.
 inferValueDef :: Infer ValueDef TICtx
-inferValueDef ctx@(_, _, sc) (ValueDef n e) = do
-    te  <- inferExpr ctx e
+inferValueDef ec ctx@(_, _, sc) (ValueDef n e) = do
+    te  <- inferExpr ec ctx e
     tes <- case Map.lookup n sc of
-        Just ts -> ts <$ setType te ctx ts
-        Nothing -> quantifyCtx ctx te
+        Just ts -> ts <$ setType te ec ctx ts
+        Nothing -> quantifyCtx ec ctx te
     return $ addCtx n tes ctx
 
 -- | Infer the type of a single data constructor given the type constructor,
@@ -242,16 +246,21 @@ inferValueDef ctx@(_, _, sc) (ValueDef n e) = do
 inferVariant :: Type       -- ^ Type constructor.
              -> Set TyVar  -- ^ Bound type variables.
              -> Infer Variant TICtx
-inferVariant dt bound ctx@(_, tc, _) (DataCon n ts) = do
-    let ty = quantify bound (foldr1 TyArr (ts ++ [dt]))
-        fr = Set.toList (free ty)
+inferVariant dt bound ec ctx@(_, tc, _) (DataCon n ts) = do
+    let ty  = foldr1 TyArr (ts ++ [dt])
+        tyq = quantify bound ty
+        fr  = Set.toList (free tyq)
+
+    checkKind ec ctx (Scheme 0 ty)
+
     -- The type of data constructor should be self-contained, it should
     -- not contain any free type variables.
     case fr of
         []  -> return ()
-        u:_ -> throwError . SError $ UndefinedType u
-    when (n `Map.member` tc) . throwError . SError $ ValueRedefined n
-    return $ addCtx n ty ctx
+        u:_ -> throwError $ TCError (SError (UndefinedType u)) ec
+    when (n `Map.member` tc) . throwError $
+        TCError (SError (ValueRedefined n)) ec
+    return $ addCtx n tyq ctx
 
 -- | Infer the type of an eliminator for a data type given the type constructor,
 --   list of variables bound in the type constructor, name of the type
@@ -267,7 +276,7 @@ inferElim :: Type       -- ^ Type constructor.
           -> Set TyVar  -- ^ Bound type variables.
           -> TyName     -- ^ Name of the type constructor.
           -> Infer [Variant] TICtx
-inferElim dt bound n ctx@(_, tc, _) vars = do
+inferElim dt bound n ec ctx@(_, tc, _) vars = do
     z <- newVar
     let TyVar z' = z
 
@@ -276,60 +285,72 @@ inferElim dt bound n ctx@(_, tc, _) vars = do
         tyVs vs            = foldr1 TyArr (map tyV vs ++ [dt, z])
 
         bound' = Set.insert z' bound
-        ty     = quantify bound' (tyVs vars)
-        fr     = Set.toList (free ty)
+        ty     = tyVs vars
+        tyq    = quantify bound' ty
+        fr     = Set.toList (free tyq)
+
+    checkKind ec ctx (Scheme 0 ty)
+
     -- The type of the eliminator should be self-contained, it should not
     -- contain any free type variables.
     case fr of
         []  -> return ()
-        u:_ -> throwError . SError $ UndefinedType u
+        u:_ -> throwError $ TCError (SError (UndefinedType u)) ec
 
     -- Name of the eliminator.
     let n' = uncap n
-    when (n' `Map.member` tc) . throwError . SError $ ValueRedefined n'
-    return $ addCtx n' ty ctx
+    when (n' `Map.member` tc) . throwError $
+        TCError (SError (ValueRedefined n')) ec
+    return $ addCtx n' tyq ctx
 
 -- | Kind check data type definition and add all constructors and the
 --   eliminator into type inference context.
 --
 --   Also make sure that all bound type variables are distinct.
 inferDataDef :: Infer DataDef TICtx
-inferDataDef (kc, tc, sc) (DataDef (TyCon n tvs) vs) = do
+inferDataDef ec (kc, tc, sc) (DataDef tyc@(TyCon n tvs) vs) = do
     let tvs' = Set.fromList tvs
         tvsc = Set.size tvs'
+
     -- Declared type variables should be distinct.
-    when (length tvs /= tvsc) . throwError . SError $ TypeRedefined ""
-    -- TODO: Find the offending type variable
+    when (length tvs /= tvsc) . throwError $
+        TCError (SError VarsNotUnique) (InTyCon tyc:ec)
 
     let dt   = foldl1 TyApp (TyData n:map TyVar tvs)
         ctx1 = (Map.insert n tvsc kc, tc, sc)
-    -- Infer the type of the eliminator.
-    ctx2 <- inferElim dt tvs' n ctx1 vs
 
     -- Infer the types of all constructors.
-    foldM (inferVariant dt tvs') ctx2 vs
+    ctx2 <-foldM (\ctx v -> inferVariant dt tvs' (InVariant v:ec) ctx v) ctx1 vs
+
+    -- Infer the type of the eliminator.
+    inferElim dt tvs' n (InElim:ec) ctx2 vs
+
+
 
 -- | Infer all relevant types of a single top level declaration/definition
 --   and add those types to the type inference context.
 inferTopLevel :: Infer TopLevel TICtx
-inferTopLevel ctx@(kc, _, _) (Data dd@(DataDef (TyCon n _) _)) = do
+inferTopLevel ec ctx@(kc, _, _) (Data dd@(DataDef (TyCon n _) _)) = do
     -- Do not allow multiple definitions of one type.
-    when (n `Map.member` kc) . throwError . SError $ TypeRedefined n
-    inferDataDef ctx dd
-inferTopLevel ctx@(_, tc, _) (Value vd@(ValueDef n _)) = do
+    when (n `Map.member` kc) . throwError $
+        TCError (SError (TypeRedefined n)) ec
+    inferDataDef (InDataDef dd:ec) ctx dd
+inferTopLevel ec ctx@(_, tc, _) (Value vd@(ValueDef n _)) = do
     -- Do not allow multiple definitions of one value.
-    when (n `Map.member` tc) . throwError . SError $ ValueRedefined n
-    inferValueDef ctx vd
-inferTopLevel ctx@(kc, tc,sc) (Type (Sig n ts)) = do
+    when (n `Map.member` tc) . throwError $
+        TCError (SError (ValueRedefined n)) ec
+    inferValueDef (InDef vd:ec) ctx vd
+inferTopLevel ec ctx@(kc, tc,sc) (Type t@(Sig n ts)) = do
     -- Do not allow multiple type signatures for one value. Also make sure
     -- that the code does not specify signature AFTER the actual definition.
-    -- TODO: Perhaps use separate errors?
-    when (n `Map.member` sc || n `Map.member` tc) . throwError . SError $
-        TypeSigRedefined n
-    checkKind ctx ts
+    when (n `Map.member` tc) . throwError $
+        TCError (SError (TypeSigTooLate n)) ec
+    when (n `Map.member` sc) . throwError $
+        TCError (SError (TypeSigRedefined n)) ec
+    checkKind (InTypeSig t:ec) ctx ts
     return (kc, tc, Map.insert n ts sc)
 
 -- | Infer all revelant types in the module. Returns final type inference
 --   context.
 inferModule :: Infer Module TICtx
-inferModule ctx (Module tls) = foldM inferTopLevel ctx tls
+inferModule ec ctx (Module tls) = foldM (inferTopLevel ec) ctx tls
