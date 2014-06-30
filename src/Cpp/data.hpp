@@ -17,7 +17,7 @@ struct Bool
     static const bool value = b;
 };
 
-#define unary(name, result) \
+#define __unary(name, result) \
     struct name\
     {\
         struct type\
@@ -30,7 +30,7 @@ struct Bool
         };\
     };
 
-#define binary(name, result) \
+#define __binary(name, result) \
     struct name\
     {\
         struct type\
@@ -50,26 +50,26 @@ struct Bool
         };\
     };
 
-unary(neg, Int<(-A::type::value)>)
+__unary(neg, Int<(-A::type::value)>)
 
-binary(plus,  Int<(A::type::value + B::type::value)>)
-binary(minus, Int<(A::type::value - B::type::value)>)
-binary(mul,   Int<(A::type::value * B::type::value)>)
-binary(div,   Int<(A::type::value / B::type::value)>)
-binary(rem,   Int<(A::type::value % B::type::value)>)
+__binary(plus,  Int<(A::type::value + B::type::value)>)
+__binary(minus, Int<(A::type::value - B::type::value)>)
+__binary(mul,   Int<(A::type::value * B::type::value)>)
+__binary(div,   Int<(A::type::value / B::type::value)>)
+__binary(rem,   Int<(A::type::value % B::type::value)>)
 
-binary(eq,  Bool<(A::type::value == B::type::value)>)
-binary(neq, Bool<(A::type::value != B::type::value)>)
-binary(lt,  Bool<(A::type::value <  B::type::value)>)
-binary(le,  Bool<(A::type::value <= B::type::value)>)
-binary(gt,  Bool<(A::type::value >  B::type::value)>)
-binary(ge,  Bool<(A::type::value >= B::type::value)>)
+__binary(eq,  Bool<(A::type::value == B::type::value)>)
+__binary(neq, Bool<(A::type::value != B::type::value)>)
+__binary(lt,  Bool<(A::type::value <  B::type::value)>)
+__binary(le,  Bool<(A::type::value <= B::type::value)>)
+__binary(gt,  Bool<(A::type::value >  B::type::value)>)
+__binary(ge,  Bool<(A::type::value >= B::type::value)>)
 
-unary(not_, Bool<(!A::type::value)>)
+__unary(not_, Bool<(!A::type::value)>)
 
-binary(and_, Bool<(A::type::value && B::type::value)>)
-binary(or_,  Bool<(A::type::value || B::type::value)>)
-binary(xor_, Bool<(A::type::value ^  B::type::value)>)
+__binary(and_, Bool<(A::type::value && B::type::value)>)
+__binary(or_,  Bool<(A::type::value || B::type::value)>)
+__binary(xor_, Bool<(A::type::value ^  B::type::value)>)
 
 struct if_
 {
