@@ -20,10 +20,33 @@ import Options
 
 defaultCtx :: TICtx
 defaultCtx =
-  ( Map.fromList [("Bool", 0), ("Int", 0)]
-  , Map.fromList []
-  , Map.fromList []
-  )
+    ( Map.fromList [("Bool", 0), ("Int", 0)]
+    , Map.fromList
+        [ ("neg",   ty "Int -> Int")
+        , ("plus",  ty "Int -> Int -> Int")
+        , ("minus", ty "Int -> Int -> Int")
+        , ("mul",   ty "Int -> Int -> Int")
+        , ("div",   ty "Int -> Int -> Int")
+        , ("rem",   ty "Int -> Int -> Int")
+        , ("eq",    ty "Int -> Int -> Bool")
+        , ("neq",   ty "Int -> Int -> Bool")
+        , ("lt",    ty "Int -> Int -> Bool")
+        , ("le",    ty "Int -> Int -> Bool")
+        , ("gt",    ty "Int -> Int -> Bool")
+        , ("ge",    ty "Int -> Int -> Bool")
+        , ("not_",  ty "Bool -> Bool")
+        , ("and_",  ty "Bool -> Bool -> Bool")
+        , ("or_",   ty "Bool -> Bool -> Bool")
+        , ("xor_",  ty "Bool -> Bool -> Bool")
+        , ("if_",   ty "Bool -> a -> a -> a")
+        ]
+    , Map.fromList []
+    )
+  where
+    ty t = case parse scheme "" t of
+        Right ts -> ts
+        Left  _  -> error "Fatal error: failed to parse the type of\
+                          \built-in function."
 
 defaultOutput :: String
 defaultOutput = "a.cpp"
