@@ -74,7 +74,7 @@ data ScopeError
     | TypeRedefined TyName   -- ^ Duplicate data type definition.
     | TypeSigRedefined Name  -- ^ Duplicate type declaration.
     | TypeSigTooLate Name    -- ^ Type signature found after definition.
-    | VarsNotUnique          -- ^ Type variables in scope are no unique.
+    | VarsNotUnique          -- ^ Type variables in scope are not unique.
     deriving (Eq, Show)
 
 -- | Type errors that occur when checking user declared types.
