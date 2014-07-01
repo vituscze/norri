@@ -45,7 +45,7 @@ defaultCtx = TICtx
     ty t = case parse scheme "" t of
         Right ts -> ts
         Left  _  -> error "Fatal error: failed to parse the type of\
-                          \built-in function."
+                          \ built-in function."
 
 defaultOutput :: String
 defaultOutput = "a.cpp"
