@@ -311,10 +311,12 @@ inferTopLevel (Type t@(Sig n ts)) = do
     localE (InTypeSig t:) $ checkKind ts
     localS (Map.insert n ts) askCtx
 inferTopLevel (Assume t@(Sig n ts)) = do
+    -- Make sure that we are not trying to overwrite already defined value.
+    -- Also type signatures make no sense with assumptions.
     tc <- askTc
-    -- Make sure that we are not trying to overwrite already defined
-    -- value.
+    sc <- askSc
     when (n `Map.member` tc) . throwTCError $ SError (ValueRedefined n)
+    when (n `Map.member` sc) . throwTCError $ SError (TypeSigRedefined n)
     localE (InAssume t:) $ checkKind ts
     localT (Map.insert n ts) askCtx
 
