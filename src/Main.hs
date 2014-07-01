@@ -15,7 +15,6 @@ import Compiler.Compile
 import Compiler.Parser
 import Compiler.Transform
 import Compiler.TypeChecking.Context
-import Compiler.TypeChecking.Error
 import Compiler.TypeChecking.Infer
 import Options
 import Report

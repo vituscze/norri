@@ -139,7 +139,7 @@ prettyExprPrec = go
     go _ (BoolLit b) = shows b
 
     -- Stay as close to the original code as possible.
-    go p (Fix x e) = go p e
+    go p (Fix _ e) = go p e
 
 
 -- | Pretty print an expression.
@@ -167,7 +167,7 @@ prettyVD (ValueDef n ex) = concatD
     (vs, ex') = dig ex
 
     -- Since we do not print 'Fix', we can safely skip it.
-    dig (Fix x e) = dig e
+    dig (Fix _ e) = dig e
     dig (Lam x e) = (x:xs, e')
       where
         (xs, e') = dig e

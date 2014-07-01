@@ -69,9 +69,9 @@ reportTCError (TCError err loc) = do
         kind n = concat . intersperse " -> " . replicate (n + 1) $ "*"
 
     -- Unification errors.
-    go (UError (FullError t u ue)) =
-        "Cannot match type\n  " ++ prettyType t "" ++ "\n" ++
-        "with type\n  " ++ prettyType u "" ++ "\n\n" ++
+    go (UError (FullError ft fu ue)) =
+        "Cannot match type\n  " ++ prettyType ft "" ++ "\n" ++
+        "with type\n  " ++ prettyType fu "" ++ "\n\n" ++
         go' ue
       where
         go' (OccursCheck v t) =
