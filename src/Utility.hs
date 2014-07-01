@@ -21,9 +21,9 @@ uncap (c:cs) = toLower c:cs
 -- | Create a name for type variable given a unique number.
 --
 -- >>> nameTyVar 1
--- "_t1"
+-- "t1"
 nameTyVar :: Int -> String
-nameTyVar n = "_t" ++ show n
+nameTyVar n = "t" ++ show n
 
 -- | Create a name for a bound name given a unique number.
 --
