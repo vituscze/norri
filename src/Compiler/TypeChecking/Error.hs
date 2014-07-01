@@ -47,6 +47,7 @@ data LocationStep
     | InDataDef  DataDef   -- ^ In a data type definition.
     | InTypeSig  TypeSig   -- ^ In a type signature.
     | InType     Type      -- ^ In a type.
+    | InAssume   TypeSig   -- ^ In an assumption.
     deriving (Eq, Show)
 
 -- | Errors that occur during unification.

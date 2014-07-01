@@ -48,11 +48,12 @@ data Module
 
 
 -- | A top level definition/declaration is either a data definition,
---   value definition or a type signature.
+--   value definition, a type signature or an assumption.
 data TopLevel
     = Data DataDef    -- ^ Data definition.
     | Value ValueDef  -- ^ Value definition.
     | Type TypeSig    -- ^ Type signature.
+    | Assume TypeSig  -- ^ Assumption.
     deriving (Eq, Show)
 
 

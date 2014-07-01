@@ -125,13 +125,8 @@ exprOp = Ex.buildExpressionParser
     ]
     manyFactors
   where
-    prefix op name = Ex.Prefix (do
-        reservedOp op
-        return $ App (Var name))
-
-    binary op name = Ex.Infix (do
-        reservedOp op
-        return $ App . App (Var name))
+    prefix op name = Ex.Prefix $       App (Var name) <$ reservedOp op
+    binary op name = Ex.Infix  $ App . App (Var name) <$ reservedOp op
 
 -- | Parse a definition given the identifier of the entity being defined.
 def :: String -> Parser ValueDef

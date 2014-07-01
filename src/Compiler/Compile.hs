@@ -135,7 +135,8 @@ compileTopLevel :: TopLevel -> String
 compileTopLevel tl = case tl of
     Data  dd -> compileDataDef dd
     Value vd -> compileValDef vd
-    Type  _  -> ""  -- Types are erased.
+    Type   _ -> ""  -- Types are erased.
+    Assume _ -> ""  -- So are type assumptions.
 
 -- | Compile a type signature.
 --

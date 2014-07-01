@@ -310,6 +310,9 @@ inferTopLevel (Type t@(Sig n ts)) = do
     when (n `Map.member` sc) . throwTCError $ SError (TypeSigRedefined n)
     localE (InTypeSig t:) $ checkKind ts
     localS (Map.insert n ts) askCtx
+inferTopLevel (Assume t@(Sig n ts)) = do
+    localE (InAssume t:) $ checkKind ts
+    localT (Map.insert n ts) askCtx
 
 -- | Infer all revelant types in the module. Returns final type inference
 --   context.
