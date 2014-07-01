@@ -92,8 +92,8 @@ prettyDD (DataDef tyc vs) = concatD
     , prettyTyCon tyc
     , if null vs
         then id
-        else str "\n    = "
-    , concatD . intersperse (str "\n    | ") . map prettyCon $ vs
+        else str " = "
+    , concatD . intersperse (str " | ") . map prettyCon $ vs
     ]
 
 -- | Pretty print an expression given the precedence level of the surrounding
@@ -136,14 +136,9 @@ prettyExprPrec = go
     go _ (NumLit  i) = shows i
     go _ (BoolLit b) = shows b
 
-    -- We could actually define it as @go p e@ if we know that no variables
-    -- have been changed.
-    go p (Fix x e) = pWhen (p > biP) . concatD $
-        [ str "fix "
-        , str x
-        , str " -> "
-        , go biP e
-        ]
+    -- Stay as close to the original code as possible.
+    go p (Fix x e) = go p e
+
 
 -- | Pretty print an expression.
 --
@@ -169,6 +164,8 @@ prettyVD (ValueDef n ex) = concatD
   where
     (vs, ex') = dig ex
 
+    -- Since we do not print 'Fix', we can safely skip it.
+    dig (Fix x e) = dig e
     dig (Lam x e) = (x:xs, e')
       where
         (xs, e') = dig e
