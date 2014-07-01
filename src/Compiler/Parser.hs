@@ -12,6 +12,7 @@ module Compiler.Parser
     , typ
     , typeSig
     , scheme
+    , assume
 
     -- * Data definitions
     , dataDef
@@ -176,6 +177,12 @@ scheme = (\t -> quantify (free t) t) <$> typ
 typeSig :: String -> Parser TypeSig
 typeSig s = Sig s <$> (reservedOp ":" *> scheme)
 
+-- | Parse an explicit assumption.
+assume :: Parser TypeSig
+assume =  Sig
+      <$> (reserved "assume" *> anyIdent)
+      <*> (reservedOp ":" *> scheme)
+
 -- | Parse a vertical bar.
 vbar :: Parser ()
 vbar = reservedOp "|"
@@ -216,7 +223,7 @@ defOrSig = lowIdent >>= \i ->
 
 -- | Parse a 'TopLevel' entity.
 topLevel :: Parser TopLevel
-topLevel = (Data <$> dataDef) <|> defOrSig
+topLevel = (Data <$> dataDef) <|> defOrSig <|> (Assume <$> assume)
 
 -- | Parse whole 'Module'.
 --
