@@ -1,3 +1,6 @@
+#ifndef __TMPCOMPILER_RUNTIME__FIX
+#define __TMPCOMPILER_RUNTIME__FIX
+
 struct fix
 {
     struct type
@@ -16,3 +19,5 @@ struct fix
         };
     };
 };
+
+#endif /* __TMPCOMPILER_RUNTIME__FIX */

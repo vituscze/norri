@@ -1,3 +1,6 @@
+#ifndef __TMPCOMPILER_RUNTIME__BUILTIN
+#define __TMPCOMPILER_RUNTIME__BUILTIN
+
 template <int i, typename __dummy, typename...>
 struct __data
 { };
@@ -112,3 +115,5 @@ struct if_
         };
     };
 };
+
+#endif /* __TMPCOMPILER_RUNTIME__BUILTIN */
