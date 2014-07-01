@@ -76,9 +76,11 @@ extend ns = do
 unifyE :: Type -> Type -> TI ()
 unifyE t u = do
     s  <- getSubst
-    s' <- case unify (apply s t) (apply s u) of
+    let t' = apply s t
+        u' = apply s u
+    s' <- case unify t' u' of
         Right s' -> return s'
-        Left  e  -> throwTCError $ UError (FullError t u e)
+        Left  e  -> throwTCError $ UError (FullError t' u' e)
     extend s'
 
 -- | A type alias for all type inference operations.
