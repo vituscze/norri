@@ -4,6 +4,7 @@ module Compiler.TypeChecking.Infer
     (
     -- * Type inference monad
       module Compiler.TypeChecking.Infer.Monad
+    , Infer
 
     -- * Fresh instantiations of type schemes
     , freshInst
