@@ -147,10 +147,12 @@ quantifyCtx t = do
 setType :: Type  -- ^ Inferred type.
         -> Infer Scheme ()
 setType t ts = do
-    tf <- freshInst ts
+    tf  <- freshInst ts
+    -- The would-be inferred type.
+    ts' <- quantifyCtx t
     unifyE tf t
     nts <- quantifyCtx tf
-    when (nts /= ts) . throwTCError $ TError (TypeTooGeneral nts ts)
+    when (nts /= ts) . throwTCError $ TError (TypeTooGeneral ts' ts)
 
 -- | Infer the type of a given expression.
 inferExpr :: Infer Expr Type
