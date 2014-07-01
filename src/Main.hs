@@ -22,7 +22,8 @@ defaultCtx :: TICtx
 defaultCtx = TICtx
     (Map.fromList [("Bool", 0), ("Int", 0), ("Type", 0)])
     (Map.fromList
-        [ ("neg",   ty "Int -> Int")
+        [ ("fix",   ty "(a -> a) -> a")
+        , ("neg",   ty "Int -> Int")
         , ("plus",  ty "Int -> Int -> Int")
         , ("minus", ty "Int -> Int -> Int")
         , ("mul",   ty "Int -> Int -> Int")
