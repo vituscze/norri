@@ -120,7 +120,8 @@ checkKind (Scheme _ ts) = go 0 ts
     go k (TyApp t u) = do
         go (k + 1) t
         go 0 u
-    go k (TyArr t u) = do
+    go k ar@(TyArr t u) = do
+        throw (k /= 0) ar 0 k
         go 0 t
         go 0 u
 
