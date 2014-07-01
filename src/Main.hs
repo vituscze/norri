@@ -15,8 +15,10 @@ import Compiler.Compile
 import Compiler.Parser
 import Compiler.Transform
 import Compiler.TypeChecking.Context
+import Compiler.TypeChecking.Error
 import Compiler.TypeChecking.Infer
 import Options
+import Report
 
 defaultCtx :: TICtx
 defaultCtx = TICtx
@@ -61,9 +63,9 @@ main = do
     code <- readFile input
     ast  <- case parse file "" code of
         Right ast -> return ast
-        Left  err -> putStrLn "Parsing error:" >> print err >> exitFailure
+        Left  err -> print err >> exitFailure
     let ast' = fixifyModule ast
     case runTI (inferModule ast') [] defaultCtx of
         Right _   -> return ()
-        Left  err -> putStrLn "Type checking error:" >> print err >> exitFailure
+        Left  err -> reportTCError err >> exitFailure
     writeFile output (compileModule (freshModule ast'))
