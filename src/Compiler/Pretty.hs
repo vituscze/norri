@@ -68,7 +68,7 @@ prettyScheme (Scheme _ ts) = prettyType ts
 
 -- | Pretty print a single data constructor.
 prettyCon :: Variant -> ShowS
-prettyCon (DataCon n ts) = concatD $
+prettyCon (DataCon n ts) = concatD
     [ str n
     , str " "
     , concatD . intersperse (str " ") . map (prettyTypePrec 11) $ ts
@@ -76,7 +76,7 @@ prettyCon (DataCon n ts) = concatD $
 
 -- | Pretty print a data definition.
 prettyDD :: DataDef -> ShowS
-prettyDD (DataDef (TyCon n tvs) vs) = concatD $
+prettyDD (DataDef (TyCon n tvs) vs) = concatD
     [ str "data "
     , str n
     , str " "
@@ -146,7 +146,7 @@ prettyExpr = prettyExprPrec 0
 -- >>> prettyVD (ValueDef "id" (Lam "y" (Var "y"))) ""
 -- "id y = y"
 prettyVD :: ValueDef -> ShowS
-prettyVD (ValueDef n ex) = concatD $
+prettyVD (ValueDef n ex) = concatD
     [ str n
     , if null vs
         then id
@@ -168,7 +168,7 @@ prettyVD (ValueDef n ex) = concatD $
 -- >>> prettyTS (Sig "x" (TyData "Int")) ""
 -- "x : Int"
 prettyTS :: TypeSig -> ShowS
-prettyTS (Sig n ts) = concatD $
+prettyTS (Sig n ts) = concatD
     [ str n
     , str " : "
     , prettyScheme ts
@@ -179,7 +179,7 @@ prettyTS (Sig n ts) = concatD $
 -- >>> prettyAssume (Sig "x" (TyArr (TyData "Int") (TyData "Bool"))) ""
 -- "assume x : Int -> Bool"
 prettyAssume :: TypeSig -> ShowS
-prettyAssume s = concatD $
+prettyAssume s = concatD
     [ str "assume "
     , prettyTS s
     ]
