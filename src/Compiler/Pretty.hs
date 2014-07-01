@@ -5,6 +5,7 @@ module Compiler.Pretty
       prettyType
     , prettyScheme
     , prettyCon
+    , prettyTyCon
     , prettyDD
     , prettyExpr
     , prettyVD
@@ -74,14 +75,24 @@ prettyCon (DataCon n ts) = concatD
     , concatD . intersperse (str " ") . map (prettyTypePrec 11) $ ts
     ]
 
+-- | Pretty print a type constructor.
+prettyTyCon :: TyCon -> ShowS
+prettyTyCon (TyCon n tvs) = concatD
+    [ str n
+    , if null tvs
+        then id
+        else str " "
+    , concatD . intersperse (str " ") . map str $ tvs
+    ]
+
 -- | Pretty print a data definition.
 prettyDD :: DataDef -> ShowS
-prettyDD (DataDef (TyCon n tvs) vs) = concatD
+prettyDD (DataDef tyc vs) = concatD
     [ str "data "
-    , str n
-    , str " "
-    , concatD . intersperse (str " ") . map str $ tvs
-    , str "\n    = "
+    , prettyTyCon tyc
+    , if null vs
+        then id
+        else str "\n    = "
     , concatD . intersperse (str "\n    | ") . map prettyCon $ vs
     ]
 
