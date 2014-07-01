@@ -71,7 +71,9 @@ prettyScheme (Scheme _ ts) = prettyType ts
 prettyCon :: Variant -> ShowS
 prettyCon (DataCon n ts) = concatD
     [ str n
-    , str " "
+    , if null ts
+        then id
+        else str " "
     , concatD . intersperse (str " ") . map (prettyTypePrec 11) $ ts
     ]
 
