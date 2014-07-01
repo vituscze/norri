@@ -129,9 +129,9 @@ exprOp = Ex.buildExpressionParser
         reservedOp op
         return $ App (Var name))
 
-    binary op name assoc = Ex.Infix (do
+    binary op name = Ex.Infix (do
         reservedOp op
-        return $ App . App (Var name)) assoc
+        return $ App . App (Var name))
 
 -- | Parse a definition given the identifier of the entity being defined.
 def :: String -> Parser ValueDef
