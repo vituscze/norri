@@ -103,34 +103,26 @@ findCtx n = do
 --   defined yet) or the scheme contains a kind error (such as @Int a@), an
 --   error is produced.
 checkKind :: Infer Scheme ()
-checkKind (Scheme _ ts) = do
-    i <- go ts
-    when (i /= 0) . throwTCError $ KError (KindMismatch ts i 0)
+checkKind (Scheme _ ts) = go 0 ts
   where
-    go (TyData n) = do
+    throw c t k1 k2 = when c . throwTCError $ KError (KindMismatch t k1 k2)
+
+    go k t@(TyData n) = do
         kc <- askKc
         case Map.lookup n kc of
-            Just i -> return i
+            Just i -> throw (k /= i) t i k
             _      -> throwTCError $ SError (UndefinedType n)
 
     -- All variables (quantified or not) are assumed to be of kind @*@.
-    go (TyGen _)  = return 0
-    go (TyVar _)  = return 0
+    go k t@(TyGen _) = throw (k /= 0) t 0 k
+    go k t@(TyVar _) = throw (k /= 0) t 0 k
 
-    -- The kind of @t@ shouldn't be @*@ and the kind of @u@ should be
-    -- @*@.
-    go (TyApp t u) = do
-        ti <- go t
-        when (ti <  1) . throwTCError $ KError (KindMismatch t ti 1)
-        ui <- go u
-        when (ui /= 0) . throwTCError $ KError (KindMismatch u ui 0)
-        return $ ti - 1
-    go (TyArr t u) = do
-        ti <- go t
-        ui <- go u
-        when (ti /= 0) . throwTCError $ KError (KindMismatch t ti 0)
-        when (ui /= 0) . throwTCError $ KError (KindMismatch u ui 0)
-        return 0
+    go k (TyApp t u) = do
+        go (k + 1) t
+        go 0 u
+    go k (TyArr t u) = do
+        go 0 t
+        go 0 u
 
 -- | Quantifiy all variables that are not free in the given typing context.
 quantifyCtx :: Infer Type Scheme
