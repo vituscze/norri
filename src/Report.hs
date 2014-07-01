@@ -66,7 +66,7 @@ reportTCError (TCError err loc) = do
         "Actual kind:\n\n  "  ++ kind k1 ++ "\n\n" ++
         "Expected kind:\n\n  " ++ kind k2
       where
-        kind n = concat . intersperse " -> " . replicate (n + 1) $ "*"
+        kind n = intercalate " -> " $ replicate (n + 1) "*"
 
     -- Unification errors.
     go (UError (FullError ft fu ue)) =
