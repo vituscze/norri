@@ -66,5 +66,5 @@ main = do
     let ast' = fixifyModule ast
     case runTI (inferModule ast') [] defaultCtx of
         Right _   -> return ()
-        Left  err -> reportTCError err >> exitFailure
+        Left  err -> reportTCError err
     writeFile output (compileModule (freshModule ast'))
