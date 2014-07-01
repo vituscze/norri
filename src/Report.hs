@@ -1,16 +1,26 @@
 -- | Error reporting.
 module Report
+    (
+      reportTCError
+    )
     where
 
 import Data.List
 import System.Exit
+import System.IO
 
 import Compiler.Pretty
 import Compiler.TypeChecking.Error
 
+-- | Print a 'String' to standard error stream.
+ePutStrLn :: String -> IO ()
+ePutStrLn = hPutStrLn stderr
+
+-- | Report the location of an error.
 reportLocation :: Location -> IO ()
-reportLocation = mapM_ (putStrLn . (++ "\n") . go)
+reportLocation = mapM_ (ePutStrLn . (++ "\n") . go)
   where
+    -- Report one step of the location.
     go (InExpr e) =
         "In an expression:\n\n  "          ++ prettyExpr e    ""
     go (InDef d) =
@@ -32,9 +42,11 @@ reportLocation = mapM_ (putStrLn . (++ "\n") . go)
     go (InAssume ts) =
         "In an assumption:\n\n  "          ++ prettyAssume ts ""
 
+-- | Report whole error: both its content and its location. Then exit the
+--   program with 'exitFailure'.
 reportTCError :: TCError -> IO ()
 reportTCError (TCError err loc) = do
-    putStrLn (go err ++ "\n")
+    ePutStrLn (go err ++ "\n")
     reportLocation loc
     exitFailure
   where
@@ -77,5 +89,4 @@ reportTCError (TCError err loc) = do
         go' (OccursCheck v t) =
             "Cannot construct infinite type: " ++ v ++ " = " ++ prettyType t ""
         go' (TyConMismatch t u) =
-            "Specially: " ++ prettyType t "" ++ " /= " ++ prettyType u ""
-
+            "Specifically: " ++ prettyType t "" ++ " /= " ++ prettyType u ""
