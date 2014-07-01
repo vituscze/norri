@@ -41,9 +41,9 @@ prettyTypePrec = go
     -- Precendence levels.
     [apP, arP] = [10, 1] :: [Int]
 
-    go p (TyData d)  = str d
-    go p (TyGen i)   = str "g" . shows i
-    go p (TyVar v)   = str v
+    go _ (TyData d)  = str d
+    go _ (TyGen i)   = str "g" . shows i
+    go _ (TyVar v)   = str v
     go p (TyApp t u) = pWhen (p > apP) . concatD $
         [ go apP t
         , str " "
@@ -92,15 +92,15 @@ prettyExprPrec = go
   where
     [apP, stP, biP] = [10, 1, 0] :: [Int]
 
-    go p (Var v) = str v
+    go _ (Var v) = str v
     go p l@(Lam _ _) = pWhen (p > biP) . concatD $
         [ str "\\"
         , concatD . intersperse (str " ") . map str $ vs
         , str " -> "
-        , go biP e'
+        , go biP ex'
         ]
       where
-        (vs, e') = dig l
+        (vs, ex') = dig l
 
         dig (Lam x e) = (x:xs, e')
           where
@@ -122,8 +122,8 @@ prettyExprPrec = go
         , str " : "
         , prettyScheme t
         ]
-    go p (NumLit  i) = shows i
-    go p (BoolLit b) = shows b
+    go _ (NumLit  i) = shows i
+    go _ (BoolLit b) = shows b
 
     -- We could actually define it as @go p e@ if we know that no variables
     -- have been changed.
@@ -153,10 +153,10 @@ prettyVD (ValueDef n ex) = concatD
         else str " "
     , concatD . intersperse (str " ") . map str $ vs
     , str " = "
-    , prettyExpr e'
+    , prettyExpr ex'
     ]
   where
-    (vs, e') = dig ex
+    (vs, ex') = dig ex
 
     dig (Lam x e) = (x:xs, e')
       where
