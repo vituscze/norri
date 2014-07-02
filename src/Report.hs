@@ -22,8 +22,7 @@ reportLocation :: Location -> IO ()
 reportLocation = mapM_ (ePutStrLn . (++ "\n") . go)
   where
     -- Report one step of the location.
-    go (InExpr e) =
-        "In expression:\n\n  " ++ runP (prettyExpr e)
+    go (InExpr e) = goE e
     go (InDef k d) =
         "In " ++ k' ++ " definition:\n\n  " ++ runP (prettyVD d)
       where
@@ -45,30 +44,22 @@ reportLocation = mapM_ (ePutStrLn . (++ "\n") . go)
     go (InAssume ts) =
         "In assumption:\n\n  " ++ runP (prettyAssume ts)
 
--- | Check and extract name of the recursive definition if an error happened
---   during type inference of 'Fix'.
-checkRecErr :: TCError -> Maybe (Name, Location)
-checkRecErr (TCError (UError _) (InExpr (Fix{}):r@(InDef _ (ValueDef n _):_))) =
-    return (n, r)
-checkRecErr _ =
-    Nothing
+    -- Report an expression.
+    goE (Fix x _) = "When checking the type of recursive value: " ++ x
+    goE (App e1 e2) = concat
+        [ "When applying:\n  "
+        , runP (prettyExpr e1)
+        , "\nto:\n  "
+        , runP (prettyExpr e2)
+        ]
+    goE e = "In expression:\n\n  " ++ runP (prettyExpr e)
 
 -- | Report whole error: both its content and its location. Then exit the
 --   program with 'exitFailure'.
 reportTCError :: TCError -> IO ()
-reportTCError e@(TCError err loc) = do
+reportTCError (TCError err loc) = do
     ePutStrLn (go err ++ "\n")
-
-    -- Let the user know that the error isn't due to some mysterious @fix@
-    -- suddenly appearing in the code - it's because the recursive definition
-    -- has wrong type.
-    loc' <- case checkRecErr e of
-        Just (n, loc') -> do
-            ePutStrLn $ "When checking the type of value: " ++ n ++ "\n"
-            return loc'
-        Nothing ->
-            return loc
-    reportLocation loc'
+    reportLocation loc
     exitFailure
   where
     -- Scope errors.
