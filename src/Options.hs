@@ -21,7 +21,7 @@ data Options
     , addRuntime :: Bool            -- ^ Whether to add the C++ runtime
                                     --   directly.
     , includeDir :: Maybe FilePath  -- ^ Location of  the C++ runtime.
-    , noGuards   :: Bool            -- ^ Do not use include guards.
+    , guards     :: Bool            -- ^ Whether to use include guards.
     }
     deriving (Eq, Show)
 
@@ -55,7 +55,7 @@ options = info (helper <*> opts)
            <> metavar "DIR"
            <> help "Location of the C++ \"runtime\""
             )
-        <*> switch
+        <*> (fmap not . switch)
             ( long "noguards"
            <> short 'n'
            <> help "Do not add #include guards"
