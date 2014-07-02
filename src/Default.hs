@@ -11,6 +11,7 @@ module Default
     -- * Default file paths
     , defaultOutput
     , defaultInclude
+    , defaultRuntime
     )
     where
 
@@ -74,8 +75,12 @@ runDefault ast = runTI (inferModule ast) defaultErrCtx defaultTICtx
 
 -- | Default output file for the resulting C++ code.
 defaultOutput :: FilePath
-defaultOutput = "a.cpp"
+defaultOutput = "a.hpp"
 
 -- | Default include directory.
 defaultInclude :: FilePath
 defaultInclude = "runtime"
+
+-- | Default runtime @.hpp@ sources.
+defaultRuntime :: [FilePath]
+defaultRuntime = ["fix.hpp", "data.hpp"]
