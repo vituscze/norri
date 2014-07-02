@@ -8,8 +8,9 @@ module Default
     -- * Module inference
     , runDefault
 
-    -- * Default file names
+    -- * Default file paths
     , defaultOutput
+    , defaultInclude
     )
     where
 
@@ -72,5 +73,9 @@ runDefault :: Module -> Either TCError TICtx
 runDefault ast = runTI (inferModule ast) defaultErrCtx defaultTICtx
 
 -- | Default output file for the resulting C++ code.
-defaultOutput :: String
+defaultOutput :: FilePath
 defaultOutput = "a.cpp"
+
+-- | Default include directory.
+defaultInclude :: FilePath
+defaultInclude = "runtime"
