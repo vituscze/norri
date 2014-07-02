@@ -2,12 +2,15 @@
 module Report
     (
       reportTCError
+    , reportParseError
     )
     where
 
 import Data.List
 import System.Exit
 import System.IO
+import Text.Parsec.Error
+import Text.Parsec.Pos
 
 import Compiler.AST
 import Compiler.Pretty
@@ -56,7 +59,7 @@ reportLocation = mapM_ (ePutStrLn . (++ "\n") . go)
 
 -- | Report whole error: both its content and its location. Then exit the
 --   program with 'exitFailure'.
-reportTCError :: TCError -> IO ()
+reportTCError :: TCError -> IO a
 reportTCError (TCError err loc) = do
     ePutStrLn (go err ++ "\n")
     reportLocation loc
@@ -120,3 +123,22 @@ reportTCError (TCError err loc) = do
             , " /= "
             , runP (prettyType u)
             ]
+
+-- | Report a parse error, then exit the program with 'exitFailure'.
+reportParseError :: ParseError -> IO a
+reportParseError err = do
+    let pos = errorPos err
+        row = sourceLine pos
+        col = sourceColumn pos
+
+        msg = errorMessages err
+    ePutStrLn . concat $
+        [ "Line "
+        , show row
+        , ", column "
+        , show col
+        , ":"
+        ]
+    ePutStrLn $ showErrorMessages
+        "or" "unknown parse error" "expecting" "unexpected" "end of input" msg
+    exitFailure
