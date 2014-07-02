@@ -164,7 +164,7 @@ inferExpr e@(App e1 e2) = do
 inferExpr (Let [] e) =
     inferExpr e
 inferExpr (Let (d:ds) e) = do
-    ctx' <- localE (InLocalDef d:) $ inferValueDef d
+    ctx' <- localE (InDef Local d:) $ inferValueDef d
     localCtx ctx' $ inferExpr (Let ds e)
 inferExpr ex@(SetType e ts@(Scheme _ t)) = do
     localE (InType t:) $ checkKind ts
@@ -298,7 +298,7 @@ inferTopLevel (Value vd@(ValueDef n _)) = do
     -- Do not allow multiple definitions of one value.
     tc <- askTc
     when (n `Map.member` tc) . throwTCError $ SError (ValueRedefined n)
-    localE (InDef vd:) $ inferValueDef vd
+    localE (InDef TopLevel vd:) $ inferValueDef vd
 inferTopLevel (Type t@(Sig n ts)) = do
     -- Do not allow multiple type signatures for one value. Also make sure
     -- that the code does not specify signature AFTER the actual definition.

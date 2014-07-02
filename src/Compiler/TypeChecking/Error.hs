@@ -7,6 +7,7 @@ module Compiler.TypeChecking.Error
     -- * Erorr location
       Location
     , LocationStep(..)
+    , DefKind(..)
 
     -- * Unification errors
     , UnificationError(..)
@@ -36,18 +37,23 @@ import Compiler.AST
 --   @[InExpr e, InLocalDef d, InDef d']@.
 type Location = [LocationStep]
 
+-- | A definition kind.
+data DefKind
+    = Local     -- ^ Local definition.
+    | TopLevel  -- ^ Top level definition.
+    deriving (Eq, Show)
+
 -- | A single step of a full location.
 data LocationStep
-    = InExpr     Expr      -- ^ Inside an expression.
-    | InDef      ValueDef  -- ^ In a top level definition.
-    | InLocalDef ValueDef  -- ^ In a local definition.
-    | InTyCon    TyCon     -- ^ In a type constructor.
-    | InVariant  Variant   -- ^ In a data construtor.
-    | InElim               -- ^ In an eliminator for a data type.
-    | InDataDef  DataDef   -- ^ In a data type definition.
-    | InTypeSig  TypeSig   -- ^ In a type signature.
-    | InType     Type      -- ^ In a type.
-    | InAssume   TypeSig   -- ^ In an assumption.
+    = InExpr        Expr      -- ^ Inside an expression.
+    | InDef DefKind ValueDef  -- ^ In a definition.
+    | InTyCon       TyCon     -- ^ In a type constructor.
+    | InVariant     Variant   -- ^ In a data construtor.
+    | InElim                  -- ^ In an eliminator for a data type.
+    | InDataDef     DataDef   -- ^ In a data type definition.
+    | InTypeSig     TypeSig   -- ^ In a type signature.
+    | InType        Type      -- ^ In a type.
+    | InAssume      TypeSig   -- ^ In an assumption.
     deriving (Eq, Show)
 
 -- | Errors that occur during unification.

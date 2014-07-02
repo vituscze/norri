@@ -1,8 +1,11 @@
 -- | Expression and type pretty printing.
 module Compiler.Pretty
     (
+    -- * Running pretty printers
+      runP
+
     -- * Pretty printing
-      prettyType
+    , prettyType
     , prettyScheme
     , prettyCon
     , prettyTyCon
@@ -17,6 +20,10 @@ module Compiler.Pretty
 import Data.List
 
 import Compiler.AST
+
+-- | Extracts the 'String' in a 'ShowS' value.
+runP :: ShowS -> String
+runP = ($ "")
 
 -- | Transform a 'String' into 'ShowS'
 str :: String -> ShowS
