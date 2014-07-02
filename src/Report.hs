@@ -23,27 +23,27 @@ reportLocation = mapM_ (ePutStrLn . (++ "\n") . go)
   where
     -- Report one step of the location.
     go (InExpr e) =
-        "In an expression:\n\n  " ++ runP (prettyExpr e)
+        "In expression:\n\n  " ++ runP (prettyExpr e)
     go (InDef k d) =
-        "In a " ++ k' ++ " definition:\n\n  " ++ runP (prettyVD d)
+        "In " ++ k' ++ " definition:\n\n  " ++ runP (prettyVD d)
       where
         k' = case k of
             Local    -> "local"
             TopLevel -> "top level"
     go (InTyCon tc) =
-        "In a type constructor:\n\n  " ++ runP (prettyTyCon tc)
+        "In type constructor:\n\n  " ++ runP (prettyTyCon tc)
     go (InVariant v) =
-        "In a data constructor:\n\n  " ++ runP (prettyCon v)
+        "In data constructor:\n\n  " ++ runP (prettyCon v)
     go InElim =
-        "In an eliminator for this data type."
+        "In eliminator for this data type."
     go (InDataDef dd) =
-        "In a data type definition:\n\n  " ++ runP (prettyDD dd)
+        "In data type definition:\n\n  " ++ runP (prettyDD dd)
     go (InTypeSig ts) =
-        "In a type signature:\n\n  " ++ runP (prettyTS ts)
+        "In type signature:\n\n  " ++ runP (prettyTS ts)
     go (InType t) =
-        "In a type:\n\n  " ++ runP (prettyType t)
+        "In type:\n\n  " ++ runP (prettyType t)
     go (InAssume ts) =
-        "In an assumption:\n\n  " ++ runP (prettyAssume ts)
+        "In assumption:\n\n  " ++ runP (prettyAssume ts)
 
 -- | Check and extract name of the recursive definition if an error happened
 --   during type inference of 'Fix'.
