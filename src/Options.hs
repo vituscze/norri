@@ -18,8 +18,8 @@ data Options
     = Options
     { inputFile  :: FilePath        -- ^ File to be compiled.
     , outputFile :: Maybe FilePath  -- ^ Where to put the resulting C++ code.
-    , include    :: Bool            -- ^ Whether to add the C++ runtime
-                                    --   via @#include@.
+    , addRuntime :: Bool            -- ^ Whether to add the C++ runtime
+                                    --   directly.
     , includeDir :: Maybe FilePath  -- ^ Location of  the C++ runtime.
     }
     deriving (Eq, Show)
