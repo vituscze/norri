@@ -44,9 +44,9 @@ options = info (helper <*> opts)
            <> help "Location of the compiled code"
             )
         <*> switch
-            ( long "addinclude"
+            ( long "addruntime"
            <> short 'a'
-           <> help "Whether to add #include to the resulting code"
+           <> help "Whether to direclty include the runtime"
             )
         <*> (optional . strOption)
             ( long "includedir"
