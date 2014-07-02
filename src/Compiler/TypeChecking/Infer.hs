@@ -44,6 +44,10 @@ import Compiler.TypeChecking.Unify
 import Utility
 
 
+-- | Create a 'Scheme' for an unqualified 'Type'.
+scheme :: Type -> Scheme
+scheme = Scheme 0
+
 -- | Replace 'TyGen' with freshly generated type variables.
 --
 --   Basically an application of substitution that only works on 'TyGen'
