@@ -153,7 +153,7 @@ inferExpr (Var v)   =
     findCtx v >>= freshInst
 inferExpr (Lam x e) = do
     t  <- newVar
-    te <- localT (Map.insert x (Scheme 0 t)) $ inferExpr e
+    te <- localT (Map.insert x (scheme t)) $ inferExpr e
     return $ TyArr t te
 inferExpr e@(App e1 e2) = do
     te1 <- inferExpr e1
@@ -177,7 +177,7 @@ inferExpr (BoolLit _) =
     return $ TyData "Bool"
 inferExpr ex@(Fix x e) = do
     t  <- newVar
-    te <- localT (Map.insert x (Scheme 0 t)) $ inferExpr e
+    te <- localT (Map.insert x (scheme t)) $ inferExpr e
     localE (InExpr ex:) (unifyE t te)
     return t
 
@@ -210,7 +210,7 @@ inferVariant dt bound (DataCon n ts) = do
         tyq = quantify bound ty
         fr  = Set.toList (free tyq)
 
-    checkKind (Scheme 0 ty)
+    checkKind (scheme ty)
 
     -- The type of data constructor should be self-contained, it should
     -- not contain any free type variables.
@@ -248,7 +248,7 @@ inferElim dt bound n vars = do
         tyq    = quantify bound' ty
         fr     = Set.toList (free tyq)
 
-    checkKind (Scheme 0 ty)
+    checkKind (scheme ty)
 
     -- The type of the eliminator should be self-contained, it should not
     -- contain any free type variables.

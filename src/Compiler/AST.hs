@@ -19,6 +19,7 @@ module Compiler.AST
     , TypeSig(..)
     , Type(..)
     , Scheme(..)
+    , scheme
 
     -- * Shortcuts
     , Name
@@ -150,3 +151,7 @@ instance Eq Type where
 --   The number of quantified variables is given by the first field.
 data Scheme = Scheme Int Type
     deriving (Eq, Show)
+
+-- | Create a 'Scheme' for an unqualified 'Type'.
+scheme :: Type -> Scheme
+scheme = Scheme 0
