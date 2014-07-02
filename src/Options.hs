@@ -21,7 +21,7 @@ data Options
     , addRuntime :: Bool            -- ^ Whether to add the C++ runtime
                                     --   directly.
     , includeDir :: Maybe FilePath  -- ^ Location of  the C++ runtime.
-    , guards     :: Bool            -- ^ Whether to use include guards.
+    , guards     :: Bool            -- ^ Whether to use @#include@ guards.
     }
     deriving (Eq, Show)
 
