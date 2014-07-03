@@ -168,6 +168,50 @@ We can easily bring this operation in scope by writing:
 
     assume add_ptr : Type -> Type
 
+Built-in functions
+------------------
+
+The language comes equipped with some predefined functions.
+
+    fix   : (a -> a) -> a
+    neg   : Int -> Int
+    plus  : Int -> Int -> Int
+    minus : Int -> Int -> Int
+    mul   : Int -> Int -> Int
+    div   : Int -> Int -> Int
+    rem   : Int -> Int -> Int
+    eq    : Int -> Int -> Bool
+    neq   : Int -> Int -> Bool
+    lt    : Int -> Int -> Bool
+    le    : Int -> Int -> Bool
+    gt    : Int -> Int -> Bool
+    ge    : Int -> Int -> Bool
+    not_  : Bool -> Bool
+    and_  : Bool -> Bool -> Bool
+    or_   : Bool -> Bool -> Bool
+    xor_  : Bool -> Bool -> Bool
+    if_   : Bool -> a -> a -> a
+
+Some of those functions also have their infix or prefix variant for more
+readable code. Note that the pretty printer will always print their full name.
+
+    prefix 7  ~   = neg
+    prefix 7  !   = not
+    infixl 6  *   = mul
+    infixl 6  /   = div
+    infixl 6  %   = rem
+    infixl 5  +   = plus
+    infixl 5  -   = minus
+    infix  4  <   = lt
+    infix  4  <=  = le
+    infix  4  >   = gt
+    infix  4  >=  = ge
+    infix  4  ==  = eq
+    infix  4  /=  = neq
+    infixr 3  &&  = and_
+    infixr 2  ^   = xor_
+    infixr 1  ||  = or_
+
 Usage
 -----
 
