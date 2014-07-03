@@ -76,23 +76,13 @@ prettyScheme (Scheme _ ts) = prettyType ts
 
 -- | Pretty print a single data constructor.
 prettyCon :: Variant -> ShowS
-prettyCon (DataCon n ts) = concatD
-    [ str n
-    , if null ts
-        then id
-        else str " "
-    , concatD . intersperse (str " ") . map (prettyTypePrec 11) $ ts
-    ]
+prettyCon (DataCon n ts) =
+    concatD . intersperse (str " ") . (str n:) . map (prettyTypePrec 11) $ ts
 
 -- | Pretty print a type constructor.
 prettyTyCon :: TyCon -> ShowS
-prettyTyCon (TyCon n tvs) = concatD
-    [ str n
-    , if null tvs
-        then id
-        else str " "
-    , concatD . intersperse (str " ") . map str $ tvs
-    ]
+prettyTyCon (TyCon n tvs) =
+    concatD . intersperse (str " ") . (str n:) . map str $ tvs
 
 -- | Pretty print a data definition.
 prettyDD :: DataDef -> ShowS
@@ -162,11 +152,7 @@ prettyExpr = prettyExprPrec 0
 -- "id y = y"
 prettyVD :: ValueDef -> ShowS
 prettyVD (ValueDef n ex) = concatD
-    [ str n
-    , if null vs
-        then id
-        else str " "
-    , concatD . intersperse (str " ") . map str $ vs
+    [ concatD . intersperse (str " ") . (str n:) . map str $ vs
     , str " = "
     , prettyExpr ex'
     ]
