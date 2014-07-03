@@ -1,0 +1,8 @@
+data List a = Nil | Cons a (List a);
+
+-- Get the first n Fibonacci numbers.
+fib : Int -> List Int;
+fib = let go a b n = if_ (n <= 0)
+              Nil
+              (Cons a (go b (a + b) (n - 1)))
+      in go 0 1

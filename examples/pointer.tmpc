@@ -1,0 +1,7 @@
+assume add_ptr : Type -> Type;
+
+compose : (b -> c) -> (a -> b) -> a -> c;
+compose f g = \x -> f (g x);
+
+add_ptr_2 : Type -> Type;
+add_ptr_2 = compose add_ptr add_ptr
