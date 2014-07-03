@@ -167,3 +167,76 @@ For example, if we have operation `add_ptr` implemented on the C++ level:
 We can easily bring this operation in scope by writing:
 
     assume add_ptr : Type -> Type
+
+Usage
+-----
+
+The compiler is usually used with the following command:
+
+    ./tmpcompiler -o output input
+
+This type checks the file `input` and if no error is found, it complies the
+source into C++ code and writes it into `output`.
+
+If `-a` is used, the user shoud also specify the location of the runtime using
+`-i`:
+
+    ./tmpcompiler -a -i path/to/runtime -o output input
+
+The resulting code can be used either directly (if the defined value is not
+a function) - the computed type is available inside an inner type `type`.
+
+    a : Int;
+    a = 4
+
+    -- Resulting C++ code.
+    struct a { ... };
+
+    a::type        == Int<4>
+    a::type::value ==     4
+
+User defined types are encoded in a more complex way:
+
+    __data<constructor-number, __dummy, field1, ..., fieldN>
+
+Where `constructor-number` is given by the order in which constructors of its
+type are defined. For example:
+
+    data T = A  -- 0
+           | B  -- 1
+           | C  -- 2
+
+The value itself can again be accessed using the inner type `type`:
+
+    data List a = Nil | Cons a (List a);
+
+    a : List Int;
+    a = Cons 1 Nil
+
+    -- Resulting C++ code.
+    struct a { ... };
+
+    a::type == __data<1, __dummy, Int<1>, __data<0, __dummy> >
+    --                ^           ^       ^      ^
+    --                |           |       |      |
+    --            Cons´           |       |      `Nil
+    --                     field 1´       `field 2
+
+Functions contain inner template `apply`. The template argument of `apply` is
+the argument to the function and it should contain inner type `type` describing
+the actual value. For example, this is not valid:
+
+    add_ptr::type::apply<int>::type
+
+Instead, the type `int` must be wrapped:
+
+    template <typename T>
+    struct wrap
+    {
+        typedef T type;
+    };
+
+    add_ptr::type::apply<wrap<int> >::type == int*
+
+You can also create your own functions. See `add_ptr` above or look at the
+built-in functions in `runtime/data.hpp`.
