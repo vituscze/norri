@@ -109,7 +109,7 @@ also true for local definitions inside `let`.
 
 Pattern matching is not supported since we cannot guarantee correct evaluation
 in the resulting C++ code. Instead, definition of a data type automatically
-defined an eliminator. As an example:
+defines an eliminator. As an example:
 
     data D a b = A a | B b (D a b) | C
 
@@ -124,3 +124,46 @@ The eliminator `d` has following runtime behaviour:
 
 The name of these eliminators is given by the name of the type constructor -
 the first letter of its name is converted to lower case.
+
+Runtime
+-------
+
+Freshly generated code will contain references to `fix`, `__data`, `__dummy` and
+also possible built-in functions (`int` operations, `bool` operations, etc). To
+be able to use the resulting code, a runtime has to be included.
+
+The inclusion is as simple as copying the `runtime` directory to wherever the
+resulting code is. You can also control the include location using the compiler
+flag `-i` or `--includedir`, which changes the `#include` directives in the
+generated code. Standalone code can also be created using the flag `-a` or
+`--addruntime`, which causes the compiler to copy the runtime into each
+generated file.
+
+The runtime has two parts: `runtime/fix.hpp` is a template that implements
+the fixed point combinator `fix` and is needed whenever the original code
+contains recursion. `runtime/data.hpp` contains templates and structures
+needed for correct implementation of user defined data types and function
+application; it also contains definitions of built-in types (`Int` and
+`Bool`) and various functions that operate with values of these types.
+
+To allow easy integration with existing metaprogramming code, the language
+supports an abstract type `Type` which represents a C++ type and `assume`
+construct which allows to bring in scope values that can be defined elsewhere.
+
+For example, if we have operation `add_ptr` implemented on the C++ level:
+
+    struct add_ptr
+    {
+        struct type
+        {
+            template <typename T>
+            struct apply
+            {
+                typedef typename T::type* type;
+            };
+        };
+    };
+
+We can easily bring this operation in scope by writing:
+
+    assume add_ptr : Type -> Type
