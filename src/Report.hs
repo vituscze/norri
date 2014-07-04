@@ -141,7 +141,7 @@ reportTCError (TCError err loc) = do
 
 -- | Report a parse error, then exit the program with 'exitFailure'.
 --
---   Based 'Show' instance for 'ParseError'.
+--   Based on 'Show' instance for 'ParseError'.
 reportParseError :: ParseError -> IO a
 reportParseError err = do
     let pos = errorPos err
