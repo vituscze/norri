@@ -61,7 +61,7 @@ reportLocation = mapM_ (ePutStrLn . (++ "\n") . go)
 --   program with 'exitFailure'.
 reportTCError :: TCError -> IO a
 reportTCError (TCError err loc) = do
-    ePutStrLn (go err ++ "\n")
+    ePutStrLn $ go err ++ "\n"
     reportLocation loc
     exitFailure
   where
