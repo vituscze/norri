@@ -47,6 +47,8 @@ type SigCtx = Map Name Scheme
 type ErrCtx = Location
 
 -- | All contexts needed for type inference.
+--
+--   This contains kind context, type context and type signature context.
 data TICtx
     = TICtx
     { kindCtx :: KindCtx

@@ -25,10 +25,16 @@ import Compiler.TypeChecking.Error
 import Compiler.TypeChecking.Infer
 
 -- | Default error context.
+--
+--   Top level is represented as an empty list of 'LocationStep's.
 defaultErrCtx :: ErrCtx
 defaultErrCtx = []
 
 -- | Default type inference context.
+--
+--   Contains kinds of built-in types @Bool@, @Int@ and the fully abstract
+--   @Type@; types of all built-in functions (see @README@). Type signature
+--   context starts empty.
 defaultTICtx :: TICtx
 defaultTICtx = TICtx
     -- Type constructors.
@@ -70,6 +76,9 @@ defaultTICtx = TICtx
 
 -- | Run the type inference for a given module with default contexts
 --   and return the result.
+--
+--   The result is either a fully filled type inference context (which we
+--   usually do not care about) or an error.
 runDefault :: Module -> Either TCError TICtx
 runDefault ast = runTI (inferModule ast) defaultErrCtx defaultTICtx
 
@@ -78,9 +87,13 @@ defaultOutput :: FilePath
 defaultOutput = "a.hpp"
 
 -- | Default include directory.
+--
+--   Current directory is @runtime@.
 defaultInclude :: FilePath
 defaultInclude = "runtime"
 
 -- | Default runtime @.hpp@ sources.
+--
+--   The runtime currently consists of two files: @fix.hpp@ and @data.hpp@.
 defaultRuntime :: [FilePath]
 defaultRuntime = ["fix.hpp", "data.hpp"]

@@ -69,12 +69,6 @@ freshInst (Scheme i t) = do
     let m = Map.fromList $ zip [0 ..] new
     return $ inst m t
 
--- | Extend a global substitution with given one.
-extend :: Subst -> TI ()
-extend ns = do
-    os <- getSubst
-    putSubst (ns @@ os)
-
 -- | Try to unify two types and add the resulting substitution to the
 --   global one.
 unifyE :: Type -> Type -> TI ()
@@ -85,7 +79,7 @@ unifyE t u = do
     s' <- case unify t' u' of
         Right s' -> return s'
         Left  e  -> throwTCError $ UError (FullError t' u' e)
-    extend s'
+    putSubst (s' @@ s)
 
 -- | A type alias for all type inference operations.
 type Infer e t = e -> TI t
@@ -109,8 +103,10 @@ findCtx n = do
 checkKind :: Infer Scheme ()
 checkKind (Scheme _ ts) = go 0 ts
   where
+    -- Throw an error @KError (KindMismatch t k1 k2)@ only when @c@ holds.
     throw c t k1 k2 = when c . throwTCError $ KError (KindMismatch t k1 k2)
 
+    -- 'go' is given an expected kind and the type that should be checked.
     go k t@(TyData n) = do
         kc <- askKc
         case Map.lookup n kc of
@@ -129,7 +125,7 @@ checkKind (Scheme _ ts) = go 0 ts
         go 0 t
         go 0 u
 
--- | Quantifiy all variables that are not free in the given typing context.
+-- | Quantifiy all variables that are bound in the given typing context.
 quantifyCtx :: Infer Type Scheme
 quantifyCtx t = do
     s  <- getSubst
@@ -145,7 +141,8 @@ setType :: Type  -- ^ Inferred type.
         -> Infer Scheme ()
 setType t ts = do
     tf  <- freshInst ts
-    -- The would-be inferred type.
+    -- The would-be inferred type. This is only done so that we have
+    -- better error messages.
     ts' <- quantifyCtx t
     unifyE tf t
     nts <- quantifyCtx tf
@@ -153,7 +150,7 @@ setType t ts = do
 
 -- | Infer the type of a given expression.
 inferExpr :: Infer Expr Type
-inferExpr (Var v)   =
+inferExpr (Var v) =
     findCtx v >>= freshInst
 inferExpr (Lam x e) = do
     t  <- newVar

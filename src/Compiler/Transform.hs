@@ -86,7 +86,7 @@ type RenameM a = ReaderT (Map Name Name) (State Int) a
 -- | Extract a new name @s'@ from state and runs @m@ with environment mapping
 --   @s@ to @s'@.
 --
---   The crated name is @_Ts'@, where @s'@ is the extracted number.
+--   For the scheme by which names are created, see 'nameVar'.
 localInsert :: Name -> RenameM a -> RenameM (Name, a)
 localInsert s m = do
     s' <- state $ \n -> (n, n + 1)
@@ -95,10 +95,10 @@ localInsert s m = do
     return (name, a)
 
 -- | Rename all bound variables in an expression so that no two distinct
---   variables share the same name.
+--   variables share the same name. Free variables retain their original
+--   name.
 --
---   The variables are renamed to @_Tn@, where @n@ are number starting with
---   the argument @s@.
+--   The variables are renamed according to the 'nameVar' function.
 rename :: Int  -- ^ Starting number.
        -> Expr -- ^ Expression to rename.
        -> Expr
@@ -122,10 +122,6 @@ rename s ex = evalState (runReaderT (go ex) Map.empty) s
 
 -- | Replace all variables with fresh names to prevent any problems
 --   in the generated C++ code.
---
---   Note that this function should be only called after the removal of
---   direct recursion. Free occurences of the name of the defined value
---   will be replaced.
 fresh :: ValueDef -> ValueDef
 fresh (ValueDef n e) = ValueDef n (rename 0 e)
 

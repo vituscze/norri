@@ -1,7 +1,10 @@
 -- | Error reporting.
 module Report
     (
+    -- * Type checking and/or inference errors.
       reportTCError
+
+    -- * Parse errors.
     , reportParseError
     )
     where
@@ -21,6 +24,18 @@ ePutStrLn :: String -> IO ()
 ePutStrLn = hPutStrLn stderr
 
 -- | Report the location of an error.
+--
+--   Each step of the location is separated by an empty line.
+--
+-- >>> reportLocation [InType (TyVar "a"), InAssume (Sig "x" (...))]
+-- In type:
+--
+--   a
+--
+-- In assumption:
+--
+--   assume x : a
+--
 reportLocation :: Location -> IO ()
 reportLocation = mapM_ (ePutStrLn . (++ "\n") . go)
   where
@@ -125,6 +140,8 @@ reportTCError (TCError err loc) = do
             ]
 
 -- | Report a parse error, then exit the program with 'exitFailure'.
+--
+--   Based 'Show' instance for 'ParseError'.
 reportParseError :: ParseError -> IO a
 reportParseError err = do
     let pos = errorPos err

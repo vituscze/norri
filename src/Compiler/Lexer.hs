@@ -58,16 +58,16 @@ reservedCpp =
 -- | List of names reserved for implementation.
 reservedImpl :: [String]
 reservedImpl =
-    [ "fix", "assume"
+    [ "fix"
     ]
 
 -- | List of names reserved for actual language.
 reservedLang :: [String]
 reservedLang =
-    [ "data", "let", "in", "True", "False"
+    [ "data", "let", "in", "assume", "True", "False"
     ]
 
--- | List of operators.
+-- | List of reserved operators.
 ops :: [String]
 ops =
     [ "->", "\\", ":", "|"

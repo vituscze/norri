@@ -81,7 +81,7 @@ manyFactors = foldl1 App <$> many1 factor
 
 -- | Parse an 'Expr'.
 expr :: Parser Expr
-expr = exprOp >>= ((<|>) <$> lassocP <*> return)
+expr = exprOp >>= lassocP1
   where
     -- Implementation inspired by 'buildExpressionParser' from parsec.
     lassocP x = do

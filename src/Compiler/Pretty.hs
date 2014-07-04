@@ -65,7 +65,7 @@ prettyTypePrec = go
 
 -- | Pretty print a type.
 --
--- >>> prettyType (TyArr (TyVar "a") (TyVar "b")) ""
+-- >>> runP $ prettyType (TyArr (TyVar "a") (TyVar "b"))
 -- "a -> b"
 prettyType :: Type -> ShowS
 prettyType = prettyTypePrec 0
@@ -141,14 +141,14 @@ prettyExprPrec = go
 
 -- | Pretty print an expression.
 --
--- >>> prettyExpr (Lam "x" (App (Var "id") (Var "x"))) ""
+-- >>> runP $ prettyExpr (Lam "x" (App (Var "id") (Var "x")))
 -- "\x -> id x"
 prettyExpr :: Expr -> ShowS
 prettyExpr = prettyExprPrec 0
 
 -- | Pretty print a value definition.
 --
--- >>> prettyVD (ValueDef "id" (Lam "y" (Var "y"))) ""
+-- >>> runP $ prettyVD (ValueDef "id" (Lam "y" (Var "y")))
 -- "id y = y"
 prettyVD :: ValueDef -> ShowS
 prettyVD (ValueDef n ex) = concatD
@@ -168,7 +168,7 @@ prettyVD (ValueDef n ex) = concatD
 
 -- | Pretty print a type signature.
 --
--- >>> prettyTS (Sig "x" (TyData "Int")) ""
+-- >>> runP $ prettyTS (Sig "x" (TyData "Int"))
 -- "x : Int"
 prettyTS :: TypeSig -> ShowS
 prettyTS (Sig n ts) = concatD
@@ -179,7 +179,7 @@ prettyTS (Sig n ts) = concatD
 
 -- | Pretty print an assumption.
 --
--- >>> prettyAssume (Sig "x" (TyArr (TyData "Int") (TyData "Bool"))) ""
+-- >>> runP $ prettyAssume (Sig "x" (TyArr (TyData "Int") (TyData "Bool")))
 -- "assume x : Int -> Bool"
 prettyAssume :: TypeSig -> ShowS
 prettyAssume s = concatD
