@@ -48,7 +48,7 @@ This is a (very rough) grammar for the language:
 
     ty-vars ::= ty-var ty-vars | λ
 
-    cons ::= con "|" cons | con
+    cons   ::= con "|" cons | con
     con    ::= name fields       -- Constructor name followed by field types.
     fields ::= type fields | λ   -- Types of all fields.
 
@@ -217,7 +217,7 @@ Usage
 
 The compiler is usually used with the following command:
 
-    ./tmpcompiler -o output input
+    tmpcompiler -o output input
 
 This type checks the file `input` and if no error is found, it complies the
 source into C++ code and writes it into `output`.
@@ -225,7 +225,7 @@ source into C++ code and writes it into `output`.
 If `-a` is used, the user shoud also specify the location of the runtime using
 `-i`:
 
-    ./tmpcompiler -a -i path/to/runtime -o output input
+    tmpcompiler -a -i path/to/runtime -o output input
 
 The resulting code can be used either directly (if the defined value is not
 a function) - the computed type is available inside an inner type `type`.
