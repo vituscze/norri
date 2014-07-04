@@ -40,7 +40,7 @@ compile m direct guards include dest = withFile dest WriteMode $ \h -> do
         hPutStrLn h $ "#define " ++ guardName
     addHeader h
     hPutStrLn h $ compileModule (freshModule m)
-    when guards $ do
+    when guards $
         hPutStrLn h $ "#endif // " ++ guardName
   where
     addHeader h = forM_ defaultRuntime $ \rt ->
