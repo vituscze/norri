@@ -83,8 +83,8 @@ ops =
 -- | List of reserved names.
 --
 --   Some of those are reserved for the actual language (@let@, @in@, @data@,
---   @True@, @False@), some for implementation (@fix@, for example) and the
---   rest are C++ keywords.
+--   @True@, @False@, @assume@), some for implementation (@fix@, for example)
+--   and the rest are C++ keywords.
 reservedNames :: [String]
 reservedNames = reservedCpp ++ reservedImpl ++ reservedLang
 
@@ -114,7 +114,7 @@ upIdent = try (mfilter (isUpper . head) anyIdent) <?> "upper case identifier"
 
 -- | Parse an identifier which starts with an upper case letter and is
 --   not a capitalised version of a reserved name (with exception of
---   "Let", "In" and "Data").
+--   "Let", "In", "Data" and "Assume").
 up'Ident :: Parser String
 up'Ident = try (mfilter check upIdent) <?> msg
   where
@@ -134,7 +134,7 @@ reserved = Tok.reserved lexer
 reservedOp :: String -> Parser ()
 reservedOp = Tok.reservedOp lexer
 
--- | Parse a semicolon and throws away the result.
+-- | Parse a semicolon and throw away the result.
 semi :: Parser ()
 semi = () <$ Tok.semi lexer
 
