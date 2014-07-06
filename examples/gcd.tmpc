@@ -5,9 +5,9 @@ abs n = if_ (n < 0) (~n) n;
 -- Greatest common divisor.
 gcd : Int -> Int -> Int;
 gcd x y =
-  -- Euclid's algorithm.
-  let go a b = if_ (b == 0) a (go b (a % b))
-  in  go (abs x) (abs y);
+    -- Euclid's algorithm.
+    let go a b = if_ (b == 0) a (go b (a % b))
+    in  go (abs x) (abs y);
 
 data List a = Nil | Cons a (List a);
 
