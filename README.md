@@ -144,9 +144,9 @@ generated file.
 The runtime has two parts: `runtime/fix.hpp` is a template that implements
 the fixed point combinator `fix` and is needed whenever the original code
 contains recursion. `runtime/data.hpp` contains templates and structures
-needed for correct implementation of user defined data types and function
-application; it also contains definitions of built-in types (`Int` and
-`Bool`) and various functions that operate with values of these types.
+needed for correct implementation of user defined data types; it also contains
+definitions of built-in types (`Int` and `Bool`) and various functions that
+operate with values of these types.
 
 To allow easy integration with existing metaprogramming code, the language
 supports an abstract type `Type` which represents a C++ type and `assume`
