@@ -175,7 +175,6 @@ Built-in functions
 
 The language comes equipped with some predefined functions.
 
-    fix   : (a -> a) -> a
     neg   : Int -> Int
     plus  : Int -> Int -> Int
     minus : Int -> Int -> Int
