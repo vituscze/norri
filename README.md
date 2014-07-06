@@ -64,6 +64,8 @@ This is a (very rough) grammar for the language:
            | prefix expr            -- Prefix operator.
            | expr infix expr        -- Infix operator.
 
+    decls ::= value-def ";" decls | value-def
+
     prefix ::= "~"  -- Unary minus.
              | "!"  -- Unary negation.
 
