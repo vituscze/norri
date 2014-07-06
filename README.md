@@ -343,7 +343,7 @@ representation produced by compiler, which is rather verbose. To help with that,
 we'll implement a helper template to convert from one representation to the
 other.
 
-Here's how the encoding (see previous section):
+Here's the encoding (see previous section):
 
     Nil       ==  __data<0, __dummy>
     Cons a b  ==  __data<1, __dummy, a, b>
