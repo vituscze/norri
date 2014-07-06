@@ -351,7 +351,7 @@ Here's the encoding (see previous section):
 Ideally, we'd like to simply write `ints_to_list<a, b, c, ... >`. This gives
 us only once choice for `ints_to_list`:
 
-    template <int ... I>
+    template <int ... i>
     struct ints_to_list;
 
 Now we have two cases to consider. If the argument list is empty, we'll simply
