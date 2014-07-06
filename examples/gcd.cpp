@@ -12,7 +12,7 @@ struct wrap
 
 // Convert a template argument list (of ints) to a List as compiled by
 // tmpcompiler.
-template <int ... I>
+template <int ... i>
 struct ints_to_list;
 
 template <>
