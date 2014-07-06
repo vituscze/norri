@@ -4,12 +4,6 @@
 
 #include "gcd.hpp"
 
-template <typename T>
-struct wrap
-{
-    typedef T type;
-};
-
 // Convert a template argument list (of ints) to a List as compiled by
 // tmpcompiler.
 template <int ... i>
