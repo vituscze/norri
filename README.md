@@ -284,3 +284,95 @@ Instead, the type `int` must be wrapped:
 
 You can also create your own functions. See `add_ptr` above or look at the
 built-in functions in `runtime/data.hpp`.
+
+Example
+-------
+
+Suppose we want to figure out greatest common divisor of few numbers and we'd
+like to compute the answer at compile time (so that we can use it to declare
+an array of that size, for example).
+
+As a first step, we'll write the code in our language. To compute greatest
+common divisor of two numbers we can use Euclid's algorithm:
+
+    gcd : Int -> Int -> Int;
+    gcd x y =
+        -- Euclid's algorithm.
+        let go a b = if_ (b == 0) a (go b (a % b))
+        in  go (abs x) (abs y)
+
+Absolute value of a number can be defined easily:
+
+    abs : Int -> Int;
+    abs n = if_ (n < 0) (~n) n
+
+Now, we must define a list. Simple singly linked list will do:
+
+    data List a = Nil | Cons a (List a)
+
+This not only gives us constructors, but it also gives us an eliminator that
+can be used to perform case analysis:
+
+    Nil  : List a;
+    Cons : a -> List a -> List a;
+
+    list : z                   -- Case for empty list.
+        -> (a -> List a -> z)  -- Case for nonempty list.
+        -> List a              -- Input list.
+        -> z                   -- Result.
+
+With `list`, we can easily implement right fold:
+
+    foldr : (a -> b -> b) -> b -> List a -> b;
+    foldr f z = list z \x xs -> f x (foldr f z xs)
+
+To compute greatest common divisor of a list of numbers, we take GCD of first
+two, then GCD of the result and third number, and so on. The base case is 0,
+since `gcd n 0 == n`:
+
+    gcds = foldr gcd 0
+
+Now we move to the C++ part. First, we compile the previous code:
+
+    tmpcompiler -o gcd.hpp gcd.tmpc
+
+This gives us a structure named `gcds` which has inner template `type::apply`
+that can be used to compute the GCD. However, it takes the list in the
+representation produced by compiler, which is rather verbose. To help with that,
+we'll implement a helper template to convert from one representation to the
+other.
+
+Here's how the encoding (see previous section):
+
+    Nil       ==  __data<0, __dummy>
+    Cons a b  ==  __data<1, __dummy, a, b>
+
+Ideally, we'd like to simply write `ints_to_list<a, b, c, ... >`. This gives
+us only once choice for `ints_to_list`:
+
+    template <int ... I>
+    struct ints_to_list;
+
+Now we have two cases to consider. If the argument list is empty, we'll simply
+return `Nil`:
+
+    template <>
+    struct ints_to_list<>
+    {
+        typedef __data<0, __dummy> type;
+    };
+
+If the argument list contains at least one number, we must return `Cons`. First
+field is simply the number. Second field is given by recursively using
+`ints_to_list` on the rest of template arguments:
+
+    template <int i, int ... j>
+    struct ints_to_list<i, j...>
+    {
+        typedef __data<1, __dummy, Int<i>, typename ints_to_list<j...>::type> type;
+    };
+
+Since `ints_to_list` already contains inner type `type`, we can directly use
+it in the `apply` template without needing any wrapper structure.
+
+    gcds::type::apply<ints_to_list<100, 80, 64> >::type::value
