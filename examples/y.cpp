@@ -1,5 +1,5 @@
-// To use this file, compile 'y.tmpc' with
-// tmpcompiler -o y.hpp y.tmpc
+// To use this file, compile 'y.nri' with
+// norri -o y.hpp y.nri
 #include <iostream>
 
 #include "y.hpp"

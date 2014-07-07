@@ -1,11 +1,11 @@
-// To use this file, compile 'gcd.tmpc' with
-// tmpcompiler -o gcd.hpp gcd.tmpc
+// To use this file, compile 'gcd.nri' with
+// norri -o gcd.hpp gcd.nri
 #include <iostream>
 
 #include "gcd.hpp"
 
 // Convert a template argument list (of ints) to a List as compiled by
-// tmpcompiler.
+// norri.
 template <int ... i>
 struct ints_to_list;
 

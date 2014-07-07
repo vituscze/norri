@@ -1,5 +1,5 @@
-// To use this file, compile 'pointer.tmpc' with
-// tmpcompiler -o pointer.hpp pointer.tmpc
+// To use this file, compile 'pointer.nri' with
+// norri -o pointer.hpp pointer.nri
 #include <iostream>
 #include <type_traits>
 

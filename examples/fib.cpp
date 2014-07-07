@@ -1,5 +1,5 @@
-// To use this file, compile 'fib.tmpc' with
-// tmpcompiler -o fib.hpp fib.tmpc
+// To use this file, compile 'fib.nri' with
+// norri -o fib.hpp fib.nri
 #include <iostream>
 
 #include "fib.hpp"

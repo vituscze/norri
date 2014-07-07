@@ -34,7 +34,7 @@ compile :: Module
         -> FilePath  -- ^ Destination.
         -> IO ()
 compile m direct guards include dest = withFile dest WriteMode $ \h -> do
-    let guardName = "TMPCOMPILER_OUTPUT_" ++ map toUpper (takeBaseName dest)
+    let guardName = "NORRI_OUTPUT_" ++ map toUpper (takeBaseName dest)
     when guards $ do
         hPutStrLn h $ "#ifndef " ++ guardName
         hPutStrLn h $ "#define " ++ guardName

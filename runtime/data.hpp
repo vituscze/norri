@@ -1,5 +1,5 @@
-#ifndef __TMPCOMPILER_RUNTIME__BUILTIN
-#define __TMPCOMPILER_RUNTIME__BUILTIN
+#ifndef __NORRI_RUNTIME__BUILTIN
+#define __NORRI_RUNTIME__BUILTIN
 
 template <int i, typename __dummy, typename...>
 struct __data
@@ -116,4 +116,4 @@ struct if_
     };
 };
 
-#endif /* __TMPCOMPILER_RUNTIME__BUILTIN */
+#endif /* __NORRI_RUNTIME__BUILTIN */

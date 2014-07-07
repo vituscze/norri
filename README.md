@@ -21,7 +21,7 @@ A classic example is a compile time factorial:
 
 (code from [Wikipedia article on template metaprogramming](http://en.wikipedia.org/wiki/Template_metaprogramming))
 
-This languages takes this idea to the extreme. `tmpcompiler` complies a small
+This languages takes this idea to the extreme. `norri` complies a small
 functional language with Haskell-like syntax into a templated C++ code that
 can be compiled and "run" at compile time - much like the example above.
 
@@ -94,7 +94,7 @@ about the grammar, check the modules `Compiler.Lexer` and `Compiler.Parser`.
 Language
 --------
 
-The language is basically a lambda calculus with
+Norri is basically a lambda calculus with
 [Hindley-Milner type system](http://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system),
 recursion and a few extra constructs - `let` and `data`.
 
@@ -218,7 +218,7 @@ Usage
 
 The compiler is usually used with the following command:
 
-    tmpcompiler -o output input
+    norri -o output input
 
 This type checks the file `input` and if no error is found, it complies the
 source into C++ code and writes it into `output`.
@@ -226,7 +226,7 @@ source into C++ code and writes it into `output`.
 If `-a` is used, the user shoud also specify the location of the runtime using
 `-i`:
 
-    tmpcompiler -a -i path/to/runtime -o output input
+    norri -a -i path/to/runtime -o output input
 
 The resulting code can be used either directly (if the defined value is not
 a function) - the computed type is available inside an inner type `type`.
@@ -335,7 +335,7 @@ since `gcd n 0 == n`:
 
 Now we move to the C++ part. First, we compile the previous code:
 
-    tmpcompiler -o gcd.hpp gcd.tmpc
+    norri -o gcd.hpp gcd.nri
 
 This gives us a structure named `gcds` which has inner template `type::apply`
 that can be used to compute the GCD. However, it takes the list in the

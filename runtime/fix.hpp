@@ -1,5 +1,5 @@
-#ifndef __TMPCOMPILER_RUNTIME__FIX
-#define __TMPCOMPILER_RUNTIME__FIX
+#ifndef __NORRI_RUNTIME__FIX
+#define __NORRI_RUNTIME__FIX
 
 struct fix
 {
@@ -20,4 +20,4 @@ struct fix
     };
 };
 
-#endif /* __TMPCOMPILER_RUNTIME__FIX */
+#endif /* __NORRI_RUNTIME__FIX */

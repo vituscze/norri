@@ -1,4 +1,4 @@
-name:          tmpcompiler
+name:          norri
 version:       0.1.0.0
 synopsis:      C++ template metaprogramming language
 description:
@@ -8,7 +8,7 @@ license:       BSD3
 license-file:  LICENSE
 author:        Vít Šefl
 maintainer:    Vít Šefl <vituscze@gmail.com>
-homepage:      https://github.com/vituscze/tmpcompiler
+homepage:      https://github.com/vituscze/norri
 category:      Language
 build-type:    Simple
 cabal-version: >= 1.8
@@ -17,17 +17,18 @@ tested-with:   GHC == 7.6.3
 extra-source-files:
   *.md
   examples/*.cpp
-  examples/*.tmpc
+  examples/*.nri
   runtime/*.hpp
 
 source-repository head
   type: git
-  location: git://github.com/vituscze/tmpcompiler.git
+  location: git://github.com/vituscze/norri.git
 
-executable tmpcompiler
+executable norri
   main-is: Main.hs
   hs-source-dirs: src
   ghc-options: -Wall
+
   other-modules:
     Compiler.AST
     Compiler.Compile
