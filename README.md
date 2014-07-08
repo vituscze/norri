@@ -286,6 +286,23 @@ Instead, the type `int` must be wrapped:
 You can also create your own functions. See `add_ptr` above or look at the
 built-in functions in `runtime/data.hpp`.
 
+Supported compilers
+-------------------
+
+So far, the following compilers have been tested and can successfully compile
+the output of `norri`:
+
+* gcc 4.8.2
+
+* gcc 4.9.0 20140223 (experimental)
+
+* gcc 4.10.0 20140706 (experimental)
+
+* clang 3.4
+
+Other compilers with correct implementation of C++11 variadic templates might
+also work.
+
 Example
 -------
 
@@ -377,20 +394,3 @@ Since `ints_to_list` already contains inner type `type`, we can directly use
 it in the `apply` template without needing any wrapper structure.
 
     gcds::type::apply<ints_to_list<100, 80, 64> >::type::value
-
-Supported compilers
--------------------
-
-So far, the following compilers have been tested and can successfully compile
-the output of `norri`:
-
-* gcc 4.8.2
-
-* gcc 4.9.0 20140223 (experimental)
-
-* gcc 4.10.0 20140706 (experimental)
-
-* clang 3.4
-
-Other compilers with correct implementation of C++11 variadic templates might
-also work.
