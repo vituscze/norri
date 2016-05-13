@@ -18,6 +18,7 @@ module Compiler.TypeChecking.Infer
     -- * Type inference
     , inferExpr
     , inferValueDef
+    , inferLetValueDef
     , inferVariant
     , inferElim
     , inferDataDef
@@ -194,6 +195,19 @@ inferValueDef (ValueDef n e) = do
     tes <- case Map.lookup n sc of
         Just ts -> ts <$ setType te ts
         Nothing -> quantifyCtx te
+    localT (Map.insert n tes) askCtx
+
+-- | Infer the type of a given value definition inside a let expression.
+--
+--   If the inference succeeds, corresponding pair of value and its type
+--   scheme is added to the context which is then returned.
+--
+--   Since let definitions cannot have type signatures attached to them,
+--   type signatures can be freely ignored.
+inferLetValueDef :: Infer ValueDef TICtx
+inferLetValueDef (ValueDef n e) = do
+    te  <- inferExpr e
+    tes <- quantifyCtx te
     localT (Map.insert n tes) askCtx
 
 -- | Infer the type of a single data constructor given the type constructor,
