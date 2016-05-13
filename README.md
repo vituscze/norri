@@ -21,7 +21,7 @@ A classic example is a compile time factorial:
 
 (code from [Wikipedia article on template metaprogramming](http://en.wikipedia.org/wiki/Template_metaprogramming))
 
-This languages takes this idea to the extreme. `norri` complies a small
+This language takes this idea to the extreme. `norri` compiles a small
 functional language with Haskell-like syntax into a templated C++ code that
 can be compiled and "run" at compile time - much like the example above.
 

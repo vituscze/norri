@@ -47,7 +47,7 @@ options = info (helper <*> opts)
         <*> switch
             ( long "addruntime"
            <> short 'a'
-           <> help "Whether to direclty include the runtime"
+           <> help "Whether to directly include the runtime"
             )
         <*> (optional . strOption)
             ( long "includedir"
