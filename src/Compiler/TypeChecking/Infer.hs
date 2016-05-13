@@ -167,7 +167,7 @@ inferExpr e@(App e1 e2) = do
 inferExpr (Let [] e) =
     inferExpr e
 inferExpr (Let (d:ds) e) = do
-    ctx' <- localE (InDef Local d:) $ inferValueDef d
+    ctx' <- localE (InDef Local d:) $ inferLetValueDef d
     localCtx ctx' $ inferExpr (Let ds e)
 inferExpr ex@(SetType e ts@(Scheme _ t)) = do
     localE (InType t:) $ checkKind ts
