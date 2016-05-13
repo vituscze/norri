@@ -297,6 +297,8 @@ the output of `norri`:
 * gcc 4.9.0 20140223 (experimental)
 
 * gcc 4.10.0 20140706 (experimental)
+ 
+* gcc 5.2.0
 
 * clang 3.4
 
