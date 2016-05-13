@@ -125,7 +125,8 @@ checkKind (Scheme _ ts) = go 0 ts
         go 0 t
         go 0 u
 
--- | Quantifiy all variables that are bound in the given typing context.
+-- | Quantifiy all variables that are not among the free variables of
+--   the typing context.
 quantifyCtx :: Infer Type Scheme
 quantifyCtx t = do
     s  <- getSubst
