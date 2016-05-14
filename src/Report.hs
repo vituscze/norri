@@ -99,9 +99,9 @@ reportTCError (TCError err loc) = do
     -- Type errors.
     go (TError (TypeTooGeneral ts1 ts2)) = concat
         [ "Declared type is too general.\nActual type:\n\n  "
-        , runP (prettyScheme ts1)
-        , "\n\nExpected type:\n\n  "
         , runP (prettyScheme ts2)
+        , "\n\nExpected type:\n\n  "
+        , runP (prettyScheme ts1)
         ]
 
     -- Kind errors.
