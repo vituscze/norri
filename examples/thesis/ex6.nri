@@ -1,0 +1,17 @@
+data List a = Node a (List a) | End;
+
+replicate : Int -> a -> List a;
+replicate n x =
+    let go m = if_ (m <= 0)
+                   End
+                   (Node x (go (m - 1)))
+    in  go n;
+    
+map : (a -> b) -> List a -> List b;
+map f = list (\x xs -> Node (f x) (map f xs)) End;
+
+sum : List Int -> Int;
+sum = list (\x xs -> x + sum xs) 0;
+
+result : Int;
+result = sum (map (plus 2) (replicate 4 1))

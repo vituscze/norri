@@ -1,0 +1,5 @@
+twice : (a -> a) -> a -> a;
+twice f x = f (f x);
+
+result : Int;
+result = twice (plus 4) 1

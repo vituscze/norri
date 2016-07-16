@@ -1,0 +1,13 @@
+data Pair a b = Pair a b;
+
+fst = pair (\x y -> x);
+snd = pair (\x y -> y);
+
+fixtwo p = Pair (fst p (fixtwo p)) (snd p (fixtwo p));
+
+oe = fixtwo (Pair
+    (\p n -> if_ (n == 0) False (snd p (n - 1)))
+    (\p n -> if_ (n == 0) True  (fst p (n - 1))));
+    
+odd  = fst oe;
+even = snd oe    

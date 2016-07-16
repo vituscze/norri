@@ -1,0 +1,28 @@
+data T = T;
+
+data Stream a = Node a (T -> Stream a);
+
+head : Stream a -> a;
+head = stream \a t -> a;
+
+tail : Stream a -> Stream a;
+tail = stream \a t -> t T;
+
+node : a -> Stream a -> Stream a;
+node x xs = Node x \tt -> xs;
+
+map : (a -> b) -> Stream a -> Stream b;
+map f s = node (f (head s)) (map f (tail s));
+
+natural : Stream Int;
+natural = node 0 (map (plus 1) natural);
+
+repeat : Int -> (a -> a) -> a -> a;
+repeat n f x =
+    let go n = if_ (n == 0)
+                   x
+                   (f (go (n - 1)))
+    in  go n;
+
+number : Int;
+number = head (repeat 7 tail natural)

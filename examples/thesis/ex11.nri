@@ -1,0 +1,9 @@
+data List a = Node a (List a) | End;
+
+assume fail : a;
+
+head : List a -> a;
+head = list (\x xs -> x) fail;
+
+result_ok = head (Node 1 End);
+result_ko = head End
