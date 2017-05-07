@@ -19,7 +19,6 @@ module Compiler.Lexer
     )
     where
 
-import Control.Applicative hiding ((<|>))
 import Control.Monad
 import Data.Char
 import Text.Parsec

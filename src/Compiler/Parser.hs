@@ -25,7 +25,6 @@ module Compiler.Parser
     )
     where
 
-import Control.Applicative hiding ((<|>), empty, many)
 import Text.Parsec
 import qualified Text.Parsec.Expr as Ex
 import Text.Parsec.String (Parser)

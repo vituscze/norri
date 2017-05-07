@@ -27,7 +27,6 @@ module Compiler.TypeChecking.Infer
     )
     where
 
-import Control.Applicative
 import Control.Monad
 import qualified Data.Map as Map
 import Data.Map (Map)
