@@ -50,7 +50,7 @@ free (Let decls e) = (free e \\ names) `Set.union` vars
         bound' = Set.insert n bound
 
 -- | Modifiy a recursive definition into a non-recursive one by
---   adding the fix point operator. If the definition and any possible
+--   adding the fix point operator. If the definition (and any possible
 --   local definitions) are not recursive, no changes are made.
 --
 --   A definition @ValueDef n e@ is recursive, if @n@ is a free variable

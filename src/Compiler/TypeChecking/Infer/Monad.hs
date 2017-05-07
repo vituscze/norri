@@ -43,10 +43,10 @@ import Compiler.TypeChecking.Error
 import Compiler.TypeChecking.Subst
 import Utility
 
--- | A type inference monad is a combination of two state monads and one
---   error monad: first one to keep track of current substitution, the second
---   one for generation of unique variables and the last one for keeping track
---   of errors.
+-- | A type inference monad is a combination of two state monads, one reader
+--   monad and one error monad: first one to keep track of current substitution,
+--   the second one for generation of unique variables, the third one for
+--   typing and error contexts and the last one for errors.
 type TI a
     = StateT Subst (StateT Int (ReaderT (ErrCtx, TICtx) (Either TCError))) a
 
