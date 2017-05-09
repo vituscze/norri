@@ -45,7 +45,7 @@ data DefKind
 
 -- | A single step of a full location.
 data LocationStep
-    = InExpr        Expr      -- ^ Inside an expression.
+    = InExpr        Expr      -- ^ In an expression.
     | InDef DefKind ValueDef  -- ^ In a definition.
     | InTyCon       TyCon     -- ^ In a type constructor.
     | InVariant     Variant   -- ^ In a data construtor.

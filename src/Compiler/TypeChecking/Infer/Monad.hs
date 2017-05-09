@@ -44,14 +44,14 @@ import Compiler.TypeChecking.Subst
 import Utility
 
 -- | A type inference monad is a combination of two state monads, one reader
---   monad and one error monad: first one to keep track of current substitution,
---   the second one for generation of unique variables, the third one for
---   typing and error contexts and the last one for errors.
+--   monad and one error monad: the first one to keep track of the current
+--   substitution, the second one for generation of unique variables, the third
+--   one for typing and error contexts and the last one for errors.
 type TI a
     = StateT Subst (StateT Int (ReaderT (ErrCtx, TICtx) (Either TCError))) a
 
--- | Run a type inference with empty substitution and starting counter
---   for name generation.
+-- | Run a type inference computation with an empty substitution and a default
+--   fresh variable counter.
 runTI :: TI a -> ErrCtx -> TICtx -> Either TCError a
 runTI m ec tic = runReaderT (evalStateT (evalStateT m emptyS) 0) (ec, tic)
 
@@ -109,31 +109,31 @@ throwTCError e = do
     ec <- askEc
     throwError $ TCError e ec
 
--- | Locally apply a function @f@ to the error context.
+-- | Run a computation in a modified error context 'ErrCtx'.
 localE :: (ErrCtx -> ErrCtx) -> TI a -> TI a
 localE f = local go
   where
     go (ec, ctx) = (f ec, ctx)
 
--- | Locally apply a function @f@ to the kind context.
+-- | Run a computation in a modified kind context 'KindCtx'.
 localK :: (KindCtx -> KindCtx) -> TI a -> TI a
 localK f = local go
   where
     go (ec, ctx) = (ec, ctx { kindCtx = f (kindCtx ctx) })
 
--- | Locally apply a function @f@ to the typing context.
+-- | Run a computation in a modified typing context 'TyCtx'.
 localT :: (TyCtx -> TyCtx) -> TI a -> TI a
 localT f = local go
   where
     go (ec, ctx) = (ec, ctx { typeCtx = f (typeCtx ctx) })
 
--- | Locally apply a function @f@ to the type signature context.
+-- | Run a computation in a modified type signature context 'SigCtx'.
 localS :: (SigCtx -> SigCtx) -> TI a -> TI a
 localS f = local go
   where
     go (ec, ctx) = (ec, ctx { sigCtx = f (sigCtx ctx) })
 
--- | Run the computation under a given type inference context.
+-- | Run a computation in a modified type inference context 'TICtx'.
 localCtx :: TICtx -> TI a -> TI a
 localCtx ctx = local go
   where

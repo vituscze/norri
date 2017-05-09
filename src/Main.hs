@@ -26,7 +26,7 @@ import Default
 import Options
 import Report
 
--- | Compile the module and write it into specified file.
+-- | Compile the module and write it into the specified file.
 compile :: Module
         -> Bool      -- ^ Whether to add the content directly.
         -> Bool      -- ^ Whether to add @#include@ guards.

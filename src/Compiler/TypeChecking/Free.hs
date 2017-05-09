@@ -35,8 +35,8 @@ instance Free Type where
 instance Free Scheme where
     free (Scheme _ t) = free t
 
--- | Free variables of a typing context are union of free variables of
---   all types contained within.
+-- | Free variables of a typing context are the union of the free variables of
+--   the contained types.
 instance Free TyCtx where
     free = Map.foldr (Set.union . free) Set.empty
 

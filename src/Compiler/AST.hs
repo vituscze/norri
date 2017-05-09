@@ -42,7 +42,7 @@ type TyVar = String
 
 -- | AST for a module consists of a list of top level definitions and/or
 --   declarations.
-data Module
+newtype Module
     = Module [TopLevel]
     deriving (Eq, Show)
 
@@ -81,9 +81,9 @@ data ValueDef
     = ValueDef Name Expr
     deriving (Eq, Show)
 
--- | AST for an expression, which can be either a variable, lambda abstraction,
---   application of two expressions, a @let@ declaration, numeric literal
---   or fix point combinator.
+-- | AST for an expression, which can be either a variable, a lambda
+--   abstraction, an application of two expressions, a @let@ declaration,
+--   a numeric literal or a fix point combinator.
 data Expr
     = Var Name             -- ^ Single variable.
     | Lam Name Expr        -- ^ Lambda abstraction.

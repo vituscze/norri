@@ -82,7 +82,7 @@ fixifyModule (Module tls) = Module (map go tls)
 --   type @v@ to variables of type @v'@.
 type RenameM a = ReaderT (Map Name Name) (State Int) a
 
--- | Extract a new name @s'@ from state and runs @m@ with environment mapping
+-- | Extract a new name @s'@ from state and run @m@ with an environment mapping
 --   @s@ to @s'@.
 --
 --   For the scheme by which names are created, see 'nameVar'.

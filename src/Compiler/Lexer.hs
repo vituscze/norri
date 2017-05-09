@@ -141,6 +141,6 @@ semi = () <$ Tok.semi lexer
 natural :: Parser Integer
 natural = Tok.natural lexer
 
--- | Force a parser to parse whole input stream.
+-- | Force a parser to parse the whole input stream.
 everything :: Parser a -> Parser a
 everything p = Tok.whiteSpace lexer *> p <* eof

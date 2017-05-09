@@ -2,7 +2,7 @@
 -- | Implementation of type substitutions.
 module Compiler.TypeChecking.Subst
     (
-    -- * Substitution type
+    -- * Substitution
       Subst
 
     -- * Substitution modifications

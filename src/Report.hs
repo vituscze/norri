@@ -72,7 +72,7 @@ reportLocation = mapM_ (ePutStrLn . (++ "\n") . go)
         ]
     goE e = "In expression:\n\n  " ++ runP (prettyExpr e)
 
--- | Report whole error: both its content and its location. Then exit the
+-- | Report the whole error: both its content and its location. Then exit the
 --   program with 'exitFailure'.
 reportTCError :: TCError -> IO a
 reportTCError (TCError err loc) = do

@@ -33,15 +33,6 @@ str = showString
 concatD :: [ShowS] -> ShowS
 concatD = foldr (.) id
 
--- | Surround the string in parenthesis if the condition holds.
---
--- >>> pWhen (1 < 2) (str "1 + 2") ""
--- "(1 + 2)"
-pWhen :: Bool -> ShowS -> ShowS
-pWhen p s = if p
-    then str "(" . s . str ")"
-    else           s
-
 -- | Pretty print a type given a precedence level of the surrounding context.
 prettyTypePrec :: Int -> Type -> ShowS
 prettyTypePrec = go
@@ -52,12 +43,12 @@ prettyTypePrec = go
     go _ (TyData d)  = str d
     go _ (TyGen i)   = str "g" . shows i
     go _ (TyVar v)   = str v
-    go p (TyApp t u) = pWhen (p > apP) . concatD $
+    go p (TyApp t u) = showParen (p > apP) . concatD $
         [ go apP t
         , str " "
         , go (apP + 1) u
         ]
-    go p (TyArr t u) = pWhen (p > arP) . concatD $
+    go p (TyArr t u) = showParen (p > arP) . concatD $
         [ go (arP + 1) t
         , str " -> "
         , go arP u
@@ -103,7 +94,7 @@ prettyExprPrec = go
     [apP, stP, biP] = [10, 1, 0] :: [Int]
 
     go _ (Var v) = str v
-    go p l@(Lam _ _) = pWhen (p > biP) . concatD $
+    go p l@(Lam _ _) = showParen (p > biP) . concatD $
         [ str "\\"
         , concatD . intersperse (str " ") . map str $ vs
         , str " -> "
@@ -116,18 +107,18 @@ prettyExprPrec = go
           where
             (xs, e') = dig e
         dig e = ([], e)
-    go p (App e1 e2) = pWhen (p > apP) . concatD $
+    go p (App e1 e2) = showParen (p > apP) . concatD $
         [ go apP e1
         , str " "
         , go (apP + 1) e2
         ]
-    go p (Let ds e) = pWhen (p > biP) . concatD $
+    go p (Let ds e) = showParen (p > biP) . concatD $
         [ str "let "
         , concatD . intersperse (str "; ") . map prettyVD $ ds
         , str " in "
         , go biP e
         ]
-    go p (SetType e t) = pWhen (p > stP) . concatD $
+    go p (SetType e t) = showParen (p > stP) . concatD $
         [ go stP e
         , str " : "
         , prettyScheme t

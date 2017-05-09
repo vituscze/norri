@@ -1,5 +1,5 @@
 -- | Contexts used during type inference - kind contexts, typing contexts,
---   type signature contexts.
+--   error location contexts and type signature contexts.
 module Compiler.TypeChecking.Context
     (
     -- * Kinds
@@ -12,7 +12,7 @@ module Compiler.TypeChecking.Context
     -- * Type signatures
     , SigCtx
 
-    -- * Error context
+    -- * Error location context
     , ErrCtx
 
     -- * Type inference context

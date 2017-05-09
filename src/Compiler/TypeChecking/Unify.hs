@@ -16,10 +16,7 @@ import Compiler.TypeChecking.Free
 import Compiler.TypeChecking.Subst
 
 -- | Attempt to unify two types. If this operation is successful, the
---   resulting substitution is returned (in a monadic context).
---
---   If the unification is not successful, an error is thrown in the
---   surrounding error monad.
+--   resulting substitution is returned. Otherwise an error is produced.
 --
 -- >>> unify (Var "a") (TyArr (Var "b") (Var "b"))
 -- Right (Map.fromList [("a", TyArr (Var "b") (Var "b"))])

@@ -224,7 +224,7 @@ defOrSig = lowIdent >>= \i ->
 topLevel :: Parser TopLevel
 topLevel = (Data <$> dataDef) <|> defOrSig <|> (Assume <$> assume)
 
--- | Parse whole 'Module'.
+-- | Parse the whole 'Module'.
 --
 --   It also consumes everything in the input stream.
 file :: Parser Module

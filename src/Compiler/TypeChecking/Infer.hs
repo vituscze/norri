@@ -6,10 +6,10 @@ module Compiler.TypeChecking.Infer
       module Compiler.TypeChecking.Infer.Monad
     , Infer
 
-    -- * Fresh instantiations of type schemes
+    -- * Fresh instantiation of type schemes
     , freshInst
 
-    -- * Unification in TI monad context
+    -- * Unification in the 'TI' monad
     , unifyE
 
     -- * Kind checking
@@ -61,8 +61,8 @@ inst m = go
     go (TyApp t u) = TyApp (go t) (go u)
     go (TyArr t u) = TyArr (go t) (go u)
 
--- | Instantiate all quantified variables in a type scheme to a fresh type
---   variables.
+-- | Create an instantiation of a type scheme by replacing all bound variables
+--   with fresh ones.
 freshInst :: Scheme -> TI Type
 freshInst (Scheme i t) = do
     new <- replicateM i newVar
@@ -86,8 +86,8 @@ type Infer e t = e -> TI t
 
 -- | Find a type scheme corresponding to a given variable.
 --
---   If the name is not present in the context, the variable is unbound
---   and error of appropriate type is produced.
+--   If the name is not present in the context, the variable is undefined
+--   and an error is produced.
 findCtx :: Infer Name Scheme
 findCtx n = do
     tc <- askTc
@@ -185,8 +185,8 @@ inferExpr ex@(Fix x e) = do
 
 -- | Infer the type of a given value definition.
 --
---   If the inference succeeds, corresponding pair of value and its type
---   scheme is added to the context which is then returned.
+--   If the inference succeeds, return the type inference context extended with
+--   the new name and its type scheme.
 inferValueDef :: Infer ValueDef TICtx
 inferValueDef (ValueDef n e) = do
     te  <- inferExpr e
@@ -198,8 +198,8 @@ inferValueDef (ValueDef n e) = do
 
 -- | Infer the type of a given value definition inside a let expression.
 --
---   If the inference succeeds, corresponding pair of value and its type
---   scheme is added to the context which is then returned.
+--   If the inference succeeds, return the type inference context extended with
+--   the new name and its type scheme.
 --
 --   Since let definitions cannot have type signatures attached to them,
 --   type signatures can be freely ignored.
@@ -213,8 +213,8 @@ inferLetValueDef (ValueDef n e) = do
 --   list of variables bound in the type constructor and the actual data
 --   constructor.
 --
---   If the inference is successful, the type scheme of the constructor is
---   added to the context, which is then returned.
+--   If the inference succeeds, return the type inference context extended with
+--   the constructor and its type scheme.
 --
 --   If a duplicate data constructor is found, an error is produced.
 inferVariant :: Type       -- ^ Type constructor.
@@ -240,8 +240,8 @@ inferVariant dt bound (DataCon n ts) = do
 --   list of variables bound in the type constructor, name of the type
 --   constructor and the actual list of data constructors.
 --
---   If the inference is successful, the type scheme of the eliminator is added
---   to the context, which is then returned.
+--   If the inference succeeds, return the type inference context extended with
+--   the eliminator and its type scheme.
 --
 --   Note that 'inferElim' automatically picks the name for the eliminator:
 --   it is the uncapitalsed name of the data type. If a value with this name
@@ -278,7 +278,7 @@ inferElim dt bound n vars = do
     localT (Map.insert n' tyq) askCtx
 
 -- | Kind check data type definition and add all constructors and the
---   eliminator into type inference context.
+--   eliminator into the type inference context.
 --
 --   Also make sure that all bound type variables are distinct.
 inferDataDef :: Infer DataDef TICtx
@@ -302,7 +302,7 @@ inferDataDef (DataDef tyc@(TyCon n tvs) vs) = do
     localE (InElim:) . localCtx ctx2 $ inferElim dt tvs' n vs
 
 -- | Infer all relevant types of a single top level declaration/definition
---   and add those types to the type inference context.
+--   and return the extended type inference context.
 inferTopLevel :: Infer TopLevel TICtx
 inferTopLevel (Data dd@(DataDef (TyCon n _) _)) = do
     -- Do not allow multiple definitions of one type.
@@ -333,7 +333,7 @@ inferTopLevel (Assume t@(Sig n ts)) = do
     localE (InAssume t:) $ checkKind ts
     localT (Map.insert n ts) askCtx
 
--- | Infer all revelant types in the module. Returns final type inference
+-- | Infer all revelant types in the module and return the final type inference
 --   context.
 inferModule :: Infer Module TICtx
 inferModule (Module tls) = do
