@@ -1,10 +1,10 @@
 -- | Error reporting.
 module Report
     (
-    -- * Type checking and/or inference errors.
+    -- * Type checking and/or inference errors
       reportTCError
 
-    -- * Parse errors.
+    -- * Parse errors
     , reportParseError
     )
     where
