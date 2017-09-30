@@ -28,7 +28,8 @@ can be compiled and "run" at compile time - much like the example above.
 Syntax
 ------
 
-This is a (very rough) grammar for the language:
+This is a grammar for the language (parens and operator precedence omitted
+for brevity):
 
     module ::= top-level ";" module | λ
 
