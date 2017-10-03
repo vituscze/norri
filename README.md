@@ -397,3 +397,95 @@ Since `ints_to_list` already contains inner type `type`, we can directly use
 it in the `apply` template without needing any wrapper structure.
 
     gcds::type::apply<ints_to_list<100, 80, 64> >::type::value
+
+* * *
+
+It's also possible to use the computed values to initialize arrays. We'll start
+with a function generating Fibonacci numbers.
+
+    -- List as defined above.
+    fib : Int -> List Int;
+    fib =
+        let go a b n = if_ (n <= 0) Nil (Cons a (go b (a + b) (n - 1)))
+        in  go 0 1
+
+    -- fib 5 == Cons 0 (Cons 1 (Cons 1 (Cons 2 (Cons 3 Nil))))
+
+In the first example, we have a C++ template `ints_to_list` which converts a
+variadic template into encoded list. Here, we need the other direction. Let us
+start with a simple container for template parameters.
+
+    template <typename ...>
+    struct pack
+    { };
+
+We can manipulate this container using template specialization. For this example,
+the only operation we'll need is prepending a new element.
+
+    template <typename, typename>
+    struct add_front;
+
+    template <typename T, typename ... U>
+    struct add_front<T, pack<U...> >
+    {
+        typedef pack<T, U...> type;
+    };
+
+    // add_front<int, pack<char> > == pack<int, char>
+
+Converting the encoded representation into this container is simply a matter of
+recursively traversing the encoded list, prepending elements to the container
+as we go.
+
+    template <typename T>
+    struct to_pack;
+
+    // Nil case.
+    template <typename dummy>
+    struct to_pack<__data<0, dummy> >
+    {
+        typedef pack<> type;
+    };
+
+    // Cons case.
+    template <typename T, typename dummy, typename U>
+    struct to_pack<__data<1, dummy, T, U> >
+    {
+        // Recursively convert the tail and prepend the head.
+        typedef typename add_front<T, typename to_pack<U>::type>::type type;
+    };
+
+After the conversion, the container can be used to initialize an array using
+the variadic template expansion.
+
+    // Contains static array, initialized by the template parameter.
+    template <typename>
+    struct pack_to_array;
+
+    template <typename ... T>
+    struct pack_to_array<pack<T...> >
+    {
+        static int array[];
+    };
+
+    template <typename ... T>
+    int pack_to_array<pack<T...> >::array[] = { T::value... };
+    // T::value... extracts the constant named value from every template
+    // parameter
+
+After we compile the `fib` function, we can put all these templates together to
+obtain an array initialized purely at compile time.
+
+    struct ten
+    {
+        typedef Int<10> type;
+    };
+
+    typedef pack_to_array<to_pack<fib::type::apply<ten>::type>::type> fibs;
+
+    // ...
+
+    for (int i = 0; i < 10; i++)
+    {
+        std::cout << fibs::array[i] << "\n";
+    }
