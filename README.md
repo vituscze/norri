@@ -306,8 +306,8 @@ the output of `norri`:
 Other compilers with correct implementation of C++11 variadic templates might
 also work.
 
-Example
--------
+Examples
+--------
 
 Suppose we want to figure out greatest common divisor of few numbers and we'd
 like to compute the answer at compile time (so that we can use it to declare
