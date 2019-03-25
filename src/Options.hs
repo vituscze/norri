@@ -10,7 +10,6 @@ module Options
     where
 
 import Control.Applicative
-import Data.Monoid
 import Options.Applicative
 
 -- | Data type for command options.

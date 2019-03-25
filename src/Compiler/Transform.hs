@@ -116,7 +116,8 @@ rename s ex = evalState (runReaderT (go ex) Map.empty) s
         go' []                 = Let [] <$> go e
         go' (ValueDef n e':ds) = do
             let renamed = (,) <$> go e' <*> go' ds
-            (n', (e'', Let decls' outer)) <- localInsert n renamed
+            res <- localInsert n renamed
+            let (n', (e'', Let decls' outer)) = res
             return $ Let (ValueDef n' e'':decls') outer
 
 -- | Replace all variables with fresh names to prevent any problems
