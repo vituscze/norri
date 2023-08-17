@@ -131,7 +131,7 @@ the first letter of its name is converted to lower case.
 Runtime
 -------
 
-Freshly generated code will contain references to `fix`, `__data`, `__dummy` and
+Freshly generated code will contain references to `fix`, `__data` and
 also possible built-in functions (`int` operations, `bool` operations, etc). To
 be able to use the resulting code, a runtime has to be included.
 
@@ -160,9 +160,9 @@ For example, if we have operation `add_ptr` implemented on the C++ level:
         struct type
         {
             template <typename T>
-            struct apply
+            struct app
             {
-                typedef typename T::type* type;
+                using type = typename T::type*;
             };
         };
     };
@@ -243,7 +243,7 @@ a function) - the computed type is available inside an inner type `type`.
 
 User defined types are encoded in a more complex way:
 
-    __data<constructor-number, __dummy, field1, ..., fieldN>
+    __data<constructor-number, field1, ..., fieldN>
 
 Where `constructor-number` is given by the order in which constructors of its
 type are defined. For example:
@@ -262,27 +262,29 @@ The value itself can again be accessed using the inner type `type`:
     -- Resulting C++ code.
     struct a { ... };
 
-    a::type == __data<1, __dummy, Int<1>, __data<0, __dummy> >
-    --                ^           ^       ^      ^
-    --                |           |       |      |
-    --            Cons´           |       |      `Nil
-    --                     field 1´       `field 2
+    a::type == __data<1, Int<1>, __data<0>>
+    --                ^  ^       ^      ^
+    --                |  |       |      |
+    --            Cons´  |       |      `Nil
+    --           field 1´        `field 2
 
-Functions contain inner template `apply`. The template argument of `apply` is
+Functions contain inner template `app`. The template argument of `app` is
 the argument to the function and it should contain inner type `type` describing
 the actual value. For example, this is not valid:
 
-    add_ptr::type::apply<int>::type
+    add_ptr::type::app<int>::type
 
 Instead, the type `int` must be wrapped:
 
     template <typename T>
     struct wrap
     {
-        typedef T type;
+        using type = T;
     };
 
-    add_ptr::type::apply<wrap<int> >::type == int*
+    add_ptr::type::app<wrap<int>>::type == int*
+    // or
+    apply<add_ptr, wrap<int>> == int*
 
 You can also create your own functions. See `add_ptr` above or look at the
 built-in functions in `runtime/data.hpp`.
@@ -293,18 +295,11 @@ Supported compilers
 So far, the following compilers have been tested and can successfully compile
 the output of `norri`:
 
-* gcc 4.8.2
+* gcc (any version with C++17 support)
 
-* gcc 4.9.0 20140223 (experimental)
+* clang (any version with C++17 support)
 
-* gcc 4.10.0 20140706 (experimental)
-
-* gcc 5.2.0
-
-* clang 3.4
-
-Other compilers with correct implementation of C++11 variadic templates might
-also work.
+Other compilers with correct support of C++17 might also work.
 
 Examples
 --------
@@ -357,7 +352,7 @@ Now we move to the C++ part. First, we compile the previous code:
 
     norri -o gcd.hpp gcd.nri
 
-This gives us a structure named `gcds` which has inner template `type::apply`
+This gives us a structure named `gcds` which has inner template `type::app`
 that can be used to compute the GCD. However, it takes the list in the
 representation produced by compiler, which is rather verbose. To help with that,
 we'll implement a helper template to convert from one representation to the
@@ -365,13 +360,13 @@ other.
 
 Here's the encoding (see previous section):
 
-    Nil       ==  __data<0, __dummy>
-    Cons a b  ==  __data<1, __dummy, a, b>
+    Nil       ==  __data<0>
+    Cons a b  ==  __data<1, a, b>
 
-Ideally, we'd like to simply write `ints_to_list<a, b, c, ... >`. This gives
+Ideally, we'd like to simply write `ints_to_list<a, b, c, ...>`. This gives
 us only once choice for `ints_to_list`:
 
-    template <int ... i>
+    template <int... i>
     struct ints_to_list;
 
 Now we have two cases to consider. If the argument list is empty, we'll simply
@@ -380,23 +375,25 @@ return `Nil`:
     template <>
     struct ints_to_list<>
     {
-        typedef __data<0, __dummy> type;
+        using type = __data<0>;
     };
 
 If the argument list contains at least one number, we must return `Cons`. First
 field is simply the number. Second field is given by recursively using
 `ints_to_list` on the rest of template arguments:
 
-    template <int i, int ... j>
+    template <int i, int... j>
     struct ints_to_list<i, j...>
     {
-        typedef __data<1, __dummy, Int<i>, typename ints_to_list<j...>::type> type;
+        using type = __data<1, Int<i>, typename ints_to_list<j...>::type>;
     };
 
 Since `ints_to_list` already contains inner type `type`, we can directly use
-it in the `apply` template without needing any wrapper structure.
+it in the `app` template without needing any wrapper structure.
 
-    gcds::type::apply<ints_to_list<100, 80, 64> >::type::value
+    gcds::type::app<ints_to_list<100, 80, 64>>::type::value
+    // or
+    apply<gcds, ints_to_list<100, 80, 64>>::value
 
 * * *
 
@@ -415,7 +412,7 @@ In the first example, we have a C++ template `ints_to_list` which converts a
 variadic template into encoded list. Here, we need the other direction. Let us
 start with a simple container for template parameters.
 
-    template <typename ...>
+    template <typename...>
     struct pack
     { };
 
@@ -425,13 +422,13 @@ the only operation we'll need is prepending a new element.
     template <typename, typename>
     struct add_front;
 
-    template <typename T, typename ... U>
-    struct add_front<T, pack<U...> >
+    template <typename T, typename... U>
+    struct add_front<T, pack<U...>>
     {
-        typedef pack<T, U...> type;
+        using type = pack<T, U...>;
     };
 
-    // add_front<int, pack<char> > == pack<int, char>
+    // add_front<int, pack<char>> == pack<int, char>
 
 Converting the encoded representation into this container is simply a matter of
 recursively traversing the encoded list, prepending elements to the container
@@ -441,18 +438,18 @@ as we go.
     struct to_pack;
 
     // Nil case.
-    template <typename dummy>
-    struct to_pack<__data<0, dummy> >
+    template <>
+    struct to_pack<__data<0>>
     {
-        typedef pack<> type;
+        using type = pack<>;
     };
 
     // Cons case.
-    template <typename T, typename dummy, typename U>
-    struct to_pack<__data<1, dummy, T, U> >
+    template <typename T, typename U>
+    struct to_pack<__data<1, T, U>>
     {
         // Recursively convert the tail and prepend the head.
-        typedef typename add_front<T, typename to_pack<U>::type>::type type;
+        using type = typename add_front<T, typename to_pack<U>::type>::type;
     };
 
 After the conversion, the container can be used to initialize an array using
@@ -462,26 +459,21 @@ the variadic template expansion.
     template <typename>
     struct pack_to_array;
 
-    template <typename ... T>
-    struct pack_to_array<pack<T...> >
+    template <typename... T>
+    struct pack_to_array<pack<T...>>
     {
         static int array[];
     };
 
-    template <typename ... T>
-    int pack_to_array<pack<T...> >::array[] = { T::value... };
+    template <typename... T>
+    int pack_to_array<pack<T...>>::array[] = { T::value... };
     // T::value... extracts the constant named value from every template
     // parameter
 
 After we compile the `fib` function, we can put all these templates together to
 obtain an array initialized purely at compile time.
 
-    struct ten
-    {
-        typedef Int<10> type;
-    };
-
-    typedef pack_to_array<to_pack<fib::type::apply<ten>::type>::type> fibs;
+    using fibs = pack_to_array<to_pack<apply<fibs, Int<10>>>::type>;
 
     // ...
 
