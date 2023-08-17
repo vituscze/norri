@@ -3,9 +3,9 @@ struct add_ptr
     struct type
     {
         template <typename T>
-        struct apply
+        struct app
         {
-            typedef typename T::type* type;
+            using type = typename T::type*;
         };
     };
 };
@@ -13,6 +13,6 @@ struct add_ptr
 #include "a.hpp"
 
 template <typename T>
-struct wrap { typedef T type; };
+struct wrap { using type = T; };
        
-int main() { twice::type::apply<add_ptr>::type::apply<wrap<int>>::type x = 1; }
+int main() { apply<apply<twice, add_ptr>, wrap<int>> x = 1; }

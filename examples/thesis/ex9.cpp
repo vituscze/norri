@@ -6,13 +6,13 @@ struct ints_to_list;
 template <>
 struct ints_to_list<>
 {
-    typedef __data<1, __dummy> type;
+    using type = __data<1>;
 };
 
 template <int I, int ... J>
 struct ints_to_list<I, J...>
 {
-    typedef __data<0, __dummy, Int<I>, typename ints_to_list<J...>::type> type;
+    using type = __data<0, Int<I>, typename ints_to_list<J...>::type>;
 };
        
-int main() { gcds::type::apply<ints_to_list<81, 45, 120>>::type x = 0; }
+int main() { apply<gcds, ints_to_list<81, 45, 120>> x = 0; }

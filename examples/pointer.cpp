@@ -8,9 +8,9 @@ struct add_ptr
     struct type
     {
         template <typename T>
-        struct apply
+        struct app
         {
-            typedef typename T::type* type;
+            using type = typename T::type*;
         };
     };
 };
@@ -20,12 +20,12 @@ struct add_ptr
 template <typename T>
 struct wrap
 {
-    typedef T type;
+    using type = T;
 };
 
 int main()
 {
     std::cout << "is same: " << std::boolalpha
-        << std::is_same<int**, add_ptr_2::type::apply<wrap<int> >::type>::value
+        << std::is_same_v<int**, apply<add_ptr_2, wrap<int>>>
         << "\n";
 }

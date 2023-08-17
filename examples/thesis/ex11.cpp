@@ -8,7 +8,7 @@ struct fail
         static_assert(T::value, "fail encountered");            
     };
     
-    typedef report_error<Bool<false> > type;    
+    using type = report_error<Bool<false>>;
 };
 
 #include "a.hpp"
