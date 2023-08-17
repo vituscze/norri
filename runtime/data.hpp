@@ -1,24 +1,29 @@
 #ifndef __NORRI_RUNTIME__BUILTIN
 #define __NORRI_RUNTIME__BUILTIN
 
-template <int i, typename __dummy, typename...>
+template <int i, typename...>
 struct __data
-{ };
-
-struct __dummy
-{ };
+{
+    using type = __data;
+    static constexpr int tag = i;
+};
 
 template <int i>
 struct Int
 {
-    static const int value = i;
+    using type = Int;
+    static constexpr int value = i;
 };
 
 template <bool b>
 struct Bool
 {
-    static const bool value = b;
+    using type = Bool;
+    static constexpr bool value = b;
 };
+
+template <typename F, typename X>
+using apply = typename F::type::template app<X>::type;
 
 #define __unary(name, result) \
     struct name\
@@ -26,9 +31,9 @@ struct Bool
         struct type\
         {\
             template <typename A>\
-            struct apply\
+            struct app\
             {\
-                typedef result type;\
+                using type = result;\
             };\
         };\
     };
@@ -39,14 +44,14 @@ struct Bool
         struct type\
         {\
             template <typename A>\
-            struct apply\
+            struct app\
             {\
                 struct type\
                 {\
                     template <typename B>\
-                    struct apply\
+                    struct app\
                     {\
-                        typedef result type;\
+                        using type = result;\
                     };\
                 };\
             };\
@@ -79,17 +84,17 @@ struct if_
     struct type
     {
         template <typename A>
-        struct apply
+        struct app
         {
             struct type
             {
                 template <typename B>
-                struct apply
+                struct app
                 {
                     struct type
                     {
                         template <typename C>
-                        struct apply
+                        struct app
                         {
                             template <bool b, typename __dummy>
                             struct __check;
@@ -97,17 +102,17 @@ struct if_
                             template <typename __dummy>
                             struct __check<true, __dummy>
                             {
-                                typedef typename B::type type;
+                                using type = typename B::type;
                             };
 
                             template <typename __dummy>
                             struct __check<false, __dummy>
                             {
-                                typedef typename C::type type;
+                                using type = typename C::type;
                             };
 
-                            typedef typename
-                                __check<A::type::value, __dummy>::type type;
+                            using type = typename
+                                __check<A::type::value, void>::type;
                         };
                     };
                 };
