@@ -16,7 +16,6 @@ module Compiler.Compile
     )
     where
 
-import Data.Char
 import Data.List
 
 import Compiler.AST
@@ -42,38 +41,40 @@ struct :: String  -- ^ Name of the @struct@.
        -> String
 struct name content = concat ["struct ", name, lbrace, content, rbrace]
 
--- | Print a @template@ given its name, contents and the (only) template
---   argument.
+-- | Print a @template@ given its name, contents and template
+--   parameters.
 --
--- >>> putStrLn $ template "x" "s" "int y;"
+-- >>> putStrLn $ template ["x"] "s" "int y;"
 -- template <typename x>
 -- struct s
 -- {
 -- int y;
 -- };
-template :: String  -- ^ Name of the template argument.
-         -> String  -- ^ Name of the @struct@.
-         -> String  -- ^ Content of the @struct@.
+template :: [String]  -- ^ Names of the template parameters.
+         -> String    -- ^ Name of the @struct@.
+         -> String    -- ^ Content of the @struct@.
          -> String
-template arg name content
-    = "template <typename " ++ arg ++ ">\n" ++ struct name content
+template params name content
+    = "template <" ++ intercalate ", " (map ("typename " ++) params) ++ ">\n" ++ struct name content
 
 -- | Print a @template@ @struct@ forward declaration.
 --
--- >>> putStrLn $ fwdTemplate "s"
+-- >>> putStrLn $ fwdTemplate 1 "s"
 -- template <typename>
 -- struct s;
-fwdTemplate :: String  -- ^ Name of the @struct@.
+fwdTemplate :: Int     -- ^ Number of template parameters.
+            -> String  -- ^ Name of the @struct@.
             -> String
-fwdTemplate name = "template <typename>\nstruct " ++ name ++ ";\n"
+fwdTemplate n name
+    = "template <" ++ intercalate ", " (replicate n "typename") ++ ">\nstruct " ++ name ++ ";\n"
 
--- | Print a @typedef@ which identifies type expression @what@ with @type@.
+-- | Print a @using@ declaration which identifies type expression @what@ with @type@.
 --
--- >>> putStrLn $ typedef "int"
--- typedef int type;
-typedef :: String  -- ^ Type expression.
-        -> String
-typedef what = "typedef " ++ what ++ " " ++ ty ++ ";"
+-- >>> putStrLn $ using "int"
+-- using type = int;
+using :: String  -- ^ Type expression.
+      -> String
+using what = "using " ++ ty ++ " = " ++ what ++ ";"
 
 -- | Print a type expression extracting inner @type@ from another type.
 --
@@ -85,23 +86,19 @@ innerType what = "typename " ++ what ++ "::" ++ ty
 
 -- | Print a nested hierarchy of @struct@ures used for lambda abstraction.
 --
--- >>> putStrLn $ innerApply "x" "s" "int x;"
--- struct s
--- {
+-- >>> putStrLn $ innerApply "x" "int x;"
 -- struct type
 -- {
 -- template <typename x>
--- struct apply
+-- struct app
 -- {
 -- int x;
 -- };
 -- };
--- };
-innerApply :: String  -- ^ Name of the template argument.
-           -> String  -- ^ Name of the @struct@.
+innerApply :: String  -- ^ Name of the template parameter.
            -> String  -- ^ Content of the @struct@.
            -> String
-innerApply arg name = struct name . struct ty . template arg apply
+innerApply param = struct ty . template [param] apply
 
 -- | Print a list of declarations.
 --
@@ -112,15 +109,11 @@ decls = concat
 
 -- | 'String' constant for inner @template@ used for lambda abstractions.
 apply :: String
-apply = "apply"
+apply = "app"
 
--- | 'String' constant for inner @typedef@s.
+-- | 'String' constant for inner @using@s.
 ty :: String
 ty = "type"
-
--- | 'String' constant for the @dummy@ type.
-dummy :: String
-dummy = "__dummy"
 
 -- | Compile whole module.
 --
@@ -158,202 +151,148 @@ compileDataDef (DataDef (TyCon tyConName _) variants) = decls
   where
     sep = "\n\n"
 
-    localArg    n  = "__ctor_arg"   ++ show n
-    localStruct n  = "__ctor_local" ++ show n
-
-    ctorStruct     = "__ctor_top_local"
-    elimStruct     = "__elim_top_local"
-
+    elimStruct     = "__elim"
     primDataStruct = "__data"
-
-    applyAlt       = "apply_alt"
+    localParam n   = "__param" ++ show n
 
     -- Compile a single data constructor.
     defineCtor :: Variant  -- ^ Data constructor.
                -> Int      -- ^ Numeric suffix for @struct@s.
                -> String
-    defineCtor (DataCon cname ts) n = struct cname . decls $
-        [ go 0 ctorStruct [] ts
-        , typedef $ innerType ctorStruct
-        ]
+    defineCtor (DataCon cname ts) n = struct cname $ go 0 [] ts
       where
-        go :: Int -> String -> [String] -> [Type] -> String
-        go _ name args [] = struct name . typedef . concat $
+        go :: Int -> [String] -> [Type] -> String
+        go _ params [] = using . concat $
             [ primDataStruct
             , "<"
             , show n
-            , ", "
-            , dummy
-            , concatMap ((", " ++) . innerType) (reverse args)
+            , concatMap ((", " ++) . innerType) (reverse params)
             , ">"
             ]
 
-        go u name args (_:rest) = innerApply localA name . decls $
-                [ go (u + 1) localS (localA:args) rest
-                , typedef $ innerType localS
-                ]
+        go u params (_:rest) = innerApply local $ go (u + 1) (local:params) rest
           where
-            localA = localArg u
-            localS = localStruct u
+            local = localParam u
 
     -- Compile an eliminator for the whole data type.
     defineElim :: [Variant] -> String
-    defineElim vs = struct (firstToLower tyConName) . decls $
-        [ go 0 elimStruct [] vs
-        , typedef $ innerType elimStruct
-        ]
+    defineElim vs = struct (uncap tyConName) $ go 0 [] vs
       where
-        firstToLower []     = []
-        firstToLower (c:cs) = toLower c:cs
-
         go :: Int        -- ^ Numeric suffix for @struct@s.
-           -> String     -- ^ Outer @struct@ name.
-           -> [String]   -- ^ Names of eliminator arguments.
+           -> [String]   -- ^ Names of eliminator parameters.
            -> [Variant]  -- ^ Data constructors.
            -> String
-        go _ name args [] =
-            struct name . struct ty . decls . intersperse "\n" $
-                [ fwdTemplate applyAlt
+        go _ params [] =
+            decls . intersperse "\n" $
+                [ fwdTemplate 2 elimStruct
                 ]
-             ++   zipWith3 handleCase vs (reverse args) [0 ..]
-             ++ [ template typeArg apply . typedef . innerType . concat $
-                    [ applyAlt
-                    , "<"
-                    , innerType typeArg
+             ++   zipWith3 handleCase vs (reverse params) [0 ..]
+             ++ [ innerApply elimParam . using . innerType . concat $
+                    [ elimStruct
+                    , "<void, "
+                    , innerType elimParam
                     , ">"
                     ]
                 ]
           where
-            typeArg  = "__type_arg"
+            elimParam  = "__elim_input"
 
-        go u name args (_:rest) = innerApply localA name . decls $
-            [ go (u + 1) localS (localA:args) rest
-            , typedef $ innerType localS
-            ]
+        go u params (_:rest) = innerApply local $ go (u + 1) (local:params) rest
           where
-            localA = localArg u
-            localS = localStruct u
+            local = localParam u
 
         -- Compile a @template@ specialization which deconstructs @n@-th
         -- constructor and applies the corresponding elimination function to
         -- all its fields.
         handleCase :: Variant  -- ^ 'Variant' to be compiled.
-                   -> String   -- ^ Argument name.
-                   -> Int      -- ^ Argument position.
+                   -> String   -- ^ Parameter name.
+                   -> Int      -- ^ Parameter position.
                    -> String
-        handleCase (DataCon _ ts) arg n = concat
+        handleCase (DataCon _ ts) param n = concat
             [ "template <typename "
             , dummy
-            , concatMap (", typename " ++) args
+            , concatMap (", typename " ++) params
             , ">\nstruct "
-            , applyAlt
+            , elimStruct
             , "<"
+            , dummy
+            , ", "
             , primDataStruct
             , "<"
             , show n
-            , ", "
-            , dummy
-            , concatMap (", " ++) args
-            , "> >"
+            , concatMap (", " ++) params
+            , ">>"
             , lbrace
             , decls $
                   wrapFields
-             ++ [ compileExpr localS . foldl1 App . map Var $
-                      arg:map (extra ++) args
-                , typedef $ innerType localS
+             ++ [ compileExpr . foldl1 App . map Var $
+                      param:map (extra ++) params
                 ]
             , rbrace
             ]
           where
             -- Names of all constructor fields.
-            args = zipWith (const $ (fieldA ++) . show) ts [0 :: Int ..]
+            params = zipWith (const $ (field ++) . show) ts [0 :: Int ..]
 
-            -- Create a wrapper @struct@ures so the data type can
-            -- contain the values directly rather than just the
-            -- expression names.
-            --
-            -- This would otherwise lead to all kinds of problems with
-            -- expressions not being interchangeable even though their
-            -- values are.
-            wrapFields = map wrapStruct args
+            -- Fields need to be wrapped so that we may refer to their @type@ member.
+            wrapFields = map wrapStruct params
               where
-                wrapStruct name = struct (extra ++ name) $
-                    typedef name
+                wrapStruct name = struct (extra ++ name) $ using name
 
-            fieldA = "__field_arg"
-            localS = "__local_case"
-
-            -- Prefix for the wrapped structures.
-            extra  = "__extra"
+            dummy = "__dummy"
+            field = "__field_param"
+            extra = "__extra"
 
 
 -- | Compile a value definition.
 compileValDef :: ValueDef -> String
-compileValDef (ValueDef name expr) =
-    struct name . decls $
-        [ compileExpr defStruct expr
-        , typedef . innerType $ defStruct
-        ]
-  where
-    defStruct = "__def"
+compileValDef (ValueDef name expr) = struct name $ compileExpr expr
 
--- | Compile and expression given a name of @struct@ it should be declared in.
-compileExpr :: String  -- ^ Name of the @struct@.
-           -> Expr
-           -> String
-compileExpr = go (0 :: Int)
+-- | Compile an expression.
+compileExpr :: Expr
+            -> String
+compileExpr = go 0
   where
-    localStruct n = "__local" ++ show n
     leftStruct  n = "__left"  ++ show n
     rightStruct n = "__right" ++ show n
 
     go :: Int     -- ^ Numeric suffix for @struct@s.
-       -> String  -- ^ Outer @struct@ name.
        -> Expr    -- ^ Expression to be compiled.
        -> String
-    go _ name (Var v) =
-        struct name . typedef . innerType $ v
+    go _ (Var v) = using . innerType $ v
 
-    go u name (Lam x expr) = innerApply x name . decls $
-            [ go (u + 1) local expr
-            , typedef $ innerType local
-            ]
-      where
-        local = localStruct u
+    go u (Lam x expr) = innerApply x $ go (u + 1) expr
 
-    go u name (App e1 e2) =
-        struct name . decls $
-            [ go (u + 1) left  e1
-            , go (u + 1) right e2
-            , typedef . concat $
-                [ "typename "
-                , left
-                , "::type::template apply<"
+    go u (App e1 e2) =
+        decls $
+            [ struct left  $ go (u + 1) e1
+            , struct right $ go (u + 1) e2
+            , using . innerType . concat $
+                [ left
+                , "::"
+                , ty
+                , "::template "
+                , apply
+                , "<"
                 , right
-                , ">::type"
+                , ">"
                 ]
             ]
       where
         left  = leftStruct  u
         right = rightStruct u
 
-    go u name (Let dec expr) =
-        struct name . decls $
-              map compileValDef dec
-         ++ [ go (u + 1) local expr
-            , typedef $ innerType local
-            ]
-      where
-        local = localStruct u
+    go u (Let dec expr) = decls $
+        map compileValDef dec ++ [go (u + 1) expr]
 
-    go u name (SetType expr _) = go u name expr
+    go u (SetType expr _) = go u expr
 
-    go _ name (NumLit n) =
-        struct name . typedef $ "Int<" ++ show n ++ ">"
+    go _ (NumLit n) =
+        using $ "Int<" ++ show n ++ ">"
 
-    go _ name (BoolLit b) =
-        struct name . typedef $ "Bool<" ++ uncap (show b) ++ ">"
+    go _ (BoolLit b) =
+        using $ "Bool<" ++ uncap (show b) ++ ">"
 
     -- Fixed point operator is transformed into language primitive
-    -- "fix" and a lambda abstraction.
-    go u name (Fix x expr) = go u name (App (Var "fix") (Lam x expr))
+    -- "fix" and an abstraction.
+    go u (Fix x expr) = go u (App (Var "fix") (Lam x expr))
